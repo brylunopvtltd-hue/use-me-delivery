@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Use Me Delivery - Store</title>
+    <style>
+        :root {
+            --primary-color: #f59e0b;
+            --primary-dark: #d97706;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #111827;
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        .app-shell {
+            width: 100%;
+            max-width: 480px;
+            height: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background-color: var(--bg-color);
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #1f2937, #111827);
+            color: #fff;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .brand-title {
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            letter-spacing: 0.5px;
+        }
+
+        .status-pill {
+            font-size: 0.65rem;
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--primary-color);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            border: 1px solid var(--primary-color);
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            padding-bottom: 80px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .promo-banner {
+            background: linear-gradient(135deg, #f59e0b, #ea580c);
+            color: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .promo-banner h2 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .promo-banner p {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .cat-card {
+            background: var(--card-bg);
+            padding: 12px 8px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+
+        .cat-card:active {
+            transform: scale(0.95);
+            border-color: var(--primary-color);
+        }
+
+        .cat-icon {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .cat-name {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            background: #f9fafb;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            outline: none;
+            color: var(--text-main);
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--primary-color);
+            background: #fff;
+        }
+
+        .row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .location-box {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .btn-gps {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .gps-status {
+            font-size: 0.75rem;
+            color: #d97706;
+            margin-top: 6px;
+            font-weight: bold;
+        }
+
+        .btn-order {
+            width: 100%;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+            border: none;
+            padding: 12px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+        }
+
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background: #ffffff;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 20%;
+        }
+
+        .nav-btn span.icon {
+            font-size: 1.2rem;
+            margin-bottom: 2px;
+        }
+
+        .nav-btn.active {
+            color: var(--primary-dark);
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="app-shell">
+        <!-- டாப் ஹெட்டர் -->
+        <header class="app-header">
+            <div class="brand-title">USE ME DELIVERY</div>
+            <div class="status-pill" id="shopStatus">OPEN</div>
+        </header>
+
+        <!-- மெயின் கன்டென்ட் -->
+        <div class="content-area">
+
+            <!-- 1. ஹோம் ஸ்கிரீன் -->
+            <div id="screen-home" class="screen active">
+                <div class="promo-banner">
+                    <h2>🔥 Special Offer!</h2>
+                    <p>6 நண்பர்களை WhatsApp Group-ல் சேர்த்தால் Delivery Fee-ல் தள்ளுபடி உண்டு!</p>
+                </div>
+
+                <div class="section-title">📦 பிரிவுகள் (Categories)</div>
+                <div class="category-grid">
+                    <div class="cat-card" onclick="App.selectCategory('Grocery')">
+                        <div class="cat-icon">🛒</div>
+                        <div class="cat-name">Grocery</div>
+                    </div>
+                    <div class="cat-card" onclick="App.selectCategory('Food & Snacks')">
+                        <div class="cat-icon">🍔</div>
+                        <div class="cat-name">Food</div>
+                    </div>
+                    <div class="cat-card" onclick="App.selectCategory('Cosmetics')">
+                        <div class="cat-icon">💄</div>
+                        <div class="cat-name">Cosmetics</div>
+                    </div>
+                    <div class="cat-card" onclick="App.selectCategory('Mobile Accessories')">
+                        <div class="cat-icon">🔌</div>
+                        <div class="cat-name">Accessories</div>
+                    </div>
+                    <div class="cat-card" onclick="App.selectCategory('Medicine')">
+                        <div class="cat-icon">💊</div>
+                        <div class="cat-name">Medicine</div>
+                    </div>
+                    <div class="cat-card" onclick="App.selectCategory('Gifts & More')">
+                        <div class="cat-icon">🎁</div>
+                        <div class="cat-name">Gifts & More</div>
+                    </div>
+                </div>
+
+                <!-- செக் அவுட் அண்ட் அட்ரஸ் ஃபார்ம் -->
+                <div class="card">
+                    <div class="section-title" style="margin-bottom: 10px;">📝 Checkout & Delivery Info</div>
+                    
+                    <div class="form-group">
+                        <label>உங்கள் பெயர் (Name)</label>
+                        <input type="text" id="orderName" placeholder="பெயரை உள்ளிடவும்...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>தேவையான பொருட்கள் விவரம் (Items)</label>
+                        <textarea id="orderDesc" rows="2" placeholder="என்ன பொருட்கள் வேண்டும் என்று எழுதவும்..."></textarea>
+                    </div>
+
+                    <div class="row-2">
+                        <div class="form-group">
+                            <label>மாவட்டம் (District)</label>
+                            <select id="orderDistrict">
+                                <option value="Ampara" selected>Ampara</option>
+                                <option value="Anuradhapura">Anuradhapura</option>
+                                <option value="Badulla">Badulla</option>
+                                <option value="Batticaloa">Batticaloa</option>
+                                <option value="Colombo">Colombo</option>
+                                <option value="Galle">Galle</option>
+                                <option value="Gampaha">Gampaha</option>
+                                <option value="Hambantota">Hambantota</option>
+                                <option value="Jaffna">Jaffna</option>
+                                <option value="Kalutara">Kalutara</option>
+                                <option value="Kandy">Kandy</option>
+                                <option value="Kegalle">Kegalle</option>
+                                <option value="Kilinochchi">Kilinochchi</option>
+                                <option value="Kurunegala">Kurunegala</option>
+                                <option value="Mannar">Mannar</option>
+                                <option value="Matale">Matale</option>
+                                <option value="Matara">Matara</option>
+                                <option value="Monaragala">Monaragala</option>
+                                <option value="Mullaitivu">Mullaitivu</option>
+                                <option value="Nuwara Eliya">Nuwara Eliya</option>
+                                <option value="Polonnaruwa">Polonnaruwa</option>
+                                <option value="Puttalam">Puttalam</option>
+                                <option value="Ratnapura">Ratnapura</option>
+                                <option value="Trincomalee">Trincomalee</option>
+                                <option value="Vavuniya">Vavuniya</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>ஊர் / Town</label>
+                            <input type="text" id="orderTown" placeholder="எ.கா: Irakkamam" value="Irakkamam">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>தெருப் பெயர் / முகவரி (Street Address)</label>
+                        <input type="text" id="orderAddress" placeholder="வீட்டு எண், தெரு பெயர்...">
+                    </div>
+
+                    <!-- GPS Location Section -->
+                    <div class="location-box">
+                        <div style="font-size: 0.75rem; font-weight: bold; color: #b45309;">📍 டெலிவரிக்கு வழி கண்டுபிடிக்க GPS கட்டாயம் தேவை</div>
+                        <button class="btn-gps" onclick="App.requestGPSLocation()">📍 Allow GPS Location (Click Here)</button>
+                        <div id="gpsStatus" class="gps-status">⚠️ GPS லொகேஷன் இன்னும் இணைக்கப்படவில்லை!</div>
+                    </div>
+
+                    <button class="btn-order" onclick="App.sendWhatsAppOrder()">📲 WhatsApp மூலம் ஆர்டர் செய்</button>
+                </div>
+            </div>
+
+            <!-- 2. ஆஃபர் ஸ்கிரீன் -->
+            <div id="screen-offers" class="screen">
+                <div class="card">
+                    <div class="section-title">🔥 WhatsApp Community Offer</div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px;">
+                        நமது அதிகாரப்பூர்வ வாட்ஸ்அப் குழுவில் இணைந்து உங்கள் நண்பர்களையும் சேருங்கள். சலுகை விவரங்கள் உடனுக்குடன் தெரிந்துகொள்ளலாம்!
+                    </p>
+                    <a href="https://chat.whatsapp.com/JrRgmamB4sK3ddIvGQxlTc" target="_blank" class="btn-order" style="display:block; text-align:center; text-decoration:none; line-height: normal;">Join WhatsApp Group</a>
+                </div>
+            </div>
+
+            <!-- 3. அட்மின் கண்ட்ரோல் பேனல் -->
+            <div id="screen-admin" class="screen">
+                <div class="card">
+                    <div class="section-title">🔐 Admin Control Panel</div>
+                    
+                    <div id="adminLoginBox">
+                        <div class="form-group">
+                            <label>Admin PIN Code</label>
+                            <input type="password" id="adminPinInput" placeholder="PIN கோட்டை உள்ளிடவும்">
+                        </div>
+                        <button class="btn-order" onclick="App.verifyAdmin()">Login</button>
+                    </div>
+
+                    <div id="adminDashboard" class="hidden">
+                        <div style="background: #ecfdf5; color: #059669; padding: 10px; border-radius: 8px; font-weight: bold; text-align: center; margin-bottom: 12px; font-size: 0.8rem;">
+                            ✔ Admin Access Active
+                        </div>
+                        <div class="form-group">
+                            <label>Shop Status</label>
+                            <select id="statusSelect" onchange="App.updateStatus(this.value)">
+                                <option value="OPEN">OPEN</option>
+                                <option value="CLOSED">CLOSED</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- பாட்டம் நேவிகேஷன் பார் -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" onclick="App.switchTab('home', this)">
+                <span class="icon">🏠</span>
+                <span>Home</span>
+            </button>
+            <button class="nav-btn" onclick="App.switchTab('offers', this)">
+                <span class="icon">🔥</span>
+                <span>Offers</span>
+            </button>
+            <button class="nav-btn" onclick="App.switchTab('admin', this)">
+                <span class="icon">⚙️</span>
+                <span>Admin</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        const App = {
+            lat: null,
+            lng: null,
+
+            switchTab: function(tabID, btn) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+                document.getElementById('screen-' + tabID).classList.add('active');
+                btn.classList.add('active');
+            },
+
+            selectCategory: function(catName) {
+                const descBox = document.getElementById('orderDesc');
+                descBox.value = `Category: ${catName} - `;
+                descBox.focus();
+            },
+
+            requestGPSLocation: function() {
+                const statusDiv = document.getElementById('gpsStatus');
+                if(!navigator.geolocation) {
+                    statusDiv.innerText = "இந்த பிரவுசர் GPS-ஐ ஆதரிக்கவில்லை!";
+                    return;
+                }
+                statusDiv.innerText = "⏳ லொகேஷன் பெறப்படுகிறது, காத்திருக்கவும்...";
+                statusDiv.style.color = "#d97706";
+
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        this.lat = pos.coords.latitude;
+                        this.lng = pos.coords.longitude;
+                        statusDiv.innerHTML = "✔ GPS லொகேஷன் வெற்றிகரமாகப் பெறப்பட்டது!";
+                        statusDiv.style.color = "#059669";
+                    },
+                    (error) => {
+                        statusDiv.innerHTML = "❌ அனுமதி மறுக்கப்பட்டது அல்லது பிழை!";
+                        statusDiv.style.color = "#dc2626";
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            },
+
+            sendWhatsAppOrder: function() {
+                const name = document.getElementById('orderName').value.trim();
+                const desc = document.getElementById('orderDesc').value.trim();
+                const district = document.getElementById('orderDistrict').value;
+                const town = document.getElementById('orderTown').value.trim();
+                const address = document.getElementById('orderAddress').value.trim();
+
+                if(!name || !desc || !town || !address) {
+                    alert("தயவுசெய்து பெயர், பொருட்கள், ஊர் மற்றும் முகவரியை முழுமையாக நிரப்பவும்!");
+                    return;
+                }
+
+                if(!this.lat || !this.lng) {
+                    alert("⚠️ டெலிவரிக்கு வாடிக்கையாளரின் GPS லொகேஷன் கட்டாயம் தேவை! 'Allow GPS Location' பட்டனை அழுத்தி லொகேஷனைப் பெறவும்.");
+                    return;
+                }
+
+                let locText = `\n📍 District: ${district}%0A🏙️ Town: ${town}%0A🏠 Address: ${address}%0A🗺️ Google Map Route: https://maps.google.com/?q=${this.lat},${this.lng}`;
+
+                const phone = "94752351751";
+                const text = `*NEW ORDER - USE ME DELIVERY*%0A%0A👤 Name: ${name}%0A🛍️ Items: ${desc}${locText}`;
+
+                // வாட்ஸ்அப்பிற்கு ரீடைரக்ட் செய்ய
+                window.location.href = `https://wa.me/${phone}?text=${text}`;
+            },
+
+            verifyAdmin: function() {
+                const pin = document.getElementById('adminPinInput').value.trim();
+                if(pin === "7523") {
+                    document.getElementById('adminLoginBox').classList.add('hidden');
+                    document.getElementById('adminDashboard').classList.remove('hidden');
+                } else {
+                    alert("தவறான PIN கோட்!");
+                }
+            },
+
+            updateStatus: function(val) {
+                const pill = document.getElementById('shopStatus');
+                pill.innerText = val;
+                pill.style.color = val === "OPEN" ? "#f59e0b" : "#dc2626";
+            }
+        };
+    </script>
+</body>
+</html>
