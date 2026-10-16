@@ -200,6 +200,11 @@ grant execute on function public.confirm_order_quote(uuid,numeric,numeric) to au
 revoke execute on function public.cancel_my_pending_order(uuid) from public,anon;
 grant execute on function public.cancel_my_pending_order(uuid) to authenticated;
 
+-- PostgreSQL triggers use these SECURITY DEFINER functions internally, not via browser RPC.
+revoke execute on function public.useme_notify_shop_application() from public,anon,authenticated;
+revoke execute on function public.useme_notify_shop_approval() from public,anon,authenticated;
+revoke execute on function public.useme_notify_order_managers() from public,anon,authenticated;
+
 drop trigger if exists useme_notify_shop_application_insert on public.shops;
 create trigger useme_notify_shop_application_insert
  after insert on public.shops for each row
