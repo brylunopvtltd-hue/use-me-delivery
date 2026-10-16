@@ -35,3 +35,12 @@ Date of changes: 2026-10-17. Production project: woytuayeuyfvucttvosw.
 - Inspect Order and Notification pages on Android/PWA (mobile and desktop, refresh/back, slow internet).
 - Configure leaked-password protection in Supabase Auth, assess remaining authenticated SECURITY DEFINER advisor notices, and consider email/PWA push separately.
 - Note: all production counts had no live products or customer orders before this Phase 4 rollout. Do not invent a successful external checkout or payment.
+
+## Final security hardening and release verification
+- Corrected the notification-trigger `SECURITY DEFINER` functions to revoke PUBLIC / anon / authenticated RPC execution. PostgreSQL triggers still invoke them internally.
+- Revoked direct order/item/event mutation grants from browser roles and removed anonymous access to orders and notifications. Authorized order RPCs continue to work.
+- Verified Owner role can approve/change shop status inside a rollback and the seller notification trigger writes one in-app notice; status returned to approved on rollback.
+- Re-tested service order creation, owner quote, acceptance and recipient read acknowledgment after grant tightening: all succeed; ordinary authenticated direct order INSERT and notice-body UPDATE are denied.
+- Final Supabase Security Advisor: zero anonymous SECURITY DEFINER warnings. Remaining warnings: 10 signed-in callable SECURITY DEFINER RPC/helper functions (requires per-function review) and leaked-password protection setting (not enabled).
+- Cloudflare Worker has 100% traffic on the Phase 4 release; Homepage remains exact approved code; CSS MIME is text/css; /seller, /orders and /notifications guest mobile routes render.
+- Database after all rollback tests: 1 approved shop; 0 real products, orders, uploaded product photos and notices. No payment or authenticated customer checkout was performed.
