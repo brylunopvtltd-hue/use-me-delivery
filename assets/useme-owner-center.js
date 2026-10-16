@@ -271,7 +271,10 @@ window.usemeOwnerSaveSettings=async function(){
   marketplace_enabled:$('ownerSettingMarketplace').checked,
   service_orders_enabled:$('ownerSettingServices').checked
  };
- if(data.min_delivery_lkr<250||data.reference_delivery_lkr<data.min_delivery_lkr||data.reference_roundtrip_km<1||
+ if(!Number.isFinite(data.min_delivery_lkr)||!Number.isFinite(data.reference_delivery_lkr)||
+  !Number.isFinite(data.reference_roundtrip_km)||data.min_delivery_lkr<250||
+  data.min_delivery_lkr>10000||data.reference_delivery_lkr<data.min_delivery_lkr||
+  data.reference_delivery_lkr>100000||data.reference_roundtrip_km<1||data.reference_roundtrip_km>500||
   !/^94[0-9]{9}$/.test(data.owner_whatsapp)||data.support_note.length<5){
   toast('Please correct the minimum fee, reference rate, WhatsApp number or note.','error');return
  }
