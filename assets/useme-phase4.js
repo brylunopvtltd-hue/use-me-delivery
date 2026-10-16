@@ -27,7 +27,7 @@ function empty(node,heading,body,callback){
 }
 function visible(page){return $(page)?.classList.contains('active')}
 
-const ownerWhatsAppNumber='94752351751';
+const ownerWhatsAppNumber=()=>window.usemePublicSettings?.owner_whatsapp||'94752351751';
 const displayStatus=status=>({
  pending:'Order received · Owner review',accepted:'Owner confirmed · Going to shop',
  preparing:'Buying products at shop',ready:'Products purchased · Ready for delivery',
@@ -208,7 +208,7 @@ function renderManagerOrders(){
   card.append(timeline(o,managerEvents.get(o.id)||[]));
   const ownerTools=el('div','v4-owner-whatsapp-tools');
   const share=el('a','btn v4-whatsapp-share','💬 WhatsApp order details');
-  share.href='https://wa.me/'+ownerWhatsAppNumber+'?text='+encodeURIComponent(orderMessage(o,lines,shop,pickup));
+  share.href='https://wa.me/'+ownerWhatsAppNumber()+'?text='+encodeURIComponent(orderMessage(o,lines,shop,pickup));
   share.target='_blank';share.rel='noopener noreferrer';share.title='Opens WhatsApp message composer; the message is not sent automatically';
   const copy=el('button','btn soft','📋 Copy order details');
   copy.onclick=async()=>{
