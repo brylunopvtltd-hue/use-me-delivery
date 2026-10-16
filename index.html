@@ -783,19 +783,22 @@ function showOwnerWhatsAppAction(targetId,message){
 const usemeRequestFallback=new Map();
 async function usemeCheckoutRequestId(kind,payload){
  const data=new TextEncoder().encode(JSON.stringify(payload));
- let hash;
- if(crypto.subtle){
+ let hash,canPersist=!!crypto.subtle;
+ if(canPersist){
   const digest=await crypto.subtle.digest('SHA-256',data);
   hash=[...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
  }else{
+  // Older browsers must never persist unhashed phone/address details.
   hash=JSON.stringify(payload);
  }
  const key='useme-phase5-request-'+kind;
  let stored=null;
- try{stored=JSON.parse(sessionStorage.getItem(key)||'null')}catch(e){stored=usemeRequestFallback.get(key)}
+ if(canPersist)try{stored=JSON.parse(sessionStorage.getItem(key)||'null')}catch(e){}
+ stored=stored||usemeRequestFallback.get(key);
  if(stored?.hash===hash&&/^[0-9a-f-]{36}$/i.test(stored.id))return stored.id;
  const id=crypto.randomUUID(),record={id,hash};
- try{sessionStorage.setItem(key,JSON.stringify(record))}catch(e){usemeRequestFallback.set(key,record)}
+ if(canPersist)try{sessionStorage.setItem(key,JSON.stringify(record))}catch(e){usemeRequestFallback.set(key,record)}
+ else usemeRequestFallback.set(key,record);
  return id;
 }
 function usemeClearCheckoutRequest(kind){
