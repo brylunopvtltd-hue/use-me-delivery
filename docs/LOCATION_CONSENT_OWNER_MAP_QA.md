@@ -35,11 +35,17 @@ Customer explicitly chooses to share their current GPS coordinates for a deliver
 - Cloudflare Worker `use-me-superapp-web` deployed with GPS assets and 100% traffic; existing approved Homepage HTML byte-identical to approved reference.
 - Mobile browser verified `/cart` active, GPS button displayed and location script loaded; additional browser-rendering screenshots were rate limited.
 - Browser geolocation accuracy/permissions and Leaflet tile loading on a real Android phone still need hands-on testing.
-- As of audit, one shop status is `suspended` and pickup coordinate/address record is missing. Restore only after authorized owner reviews its address and approves. Do not silently change status or invent coordinates.
-- No live customer or shop GPS locations were created during tests.
+- As of initial audit, one older shop was `suspended` and had no pickup details. During subsequent live use, a second shop appeared with `pending` status and a saved private GPS pickup pin. An authorized USE ME Owner must review its details and approve; do not change statuses automatically.
+- SQL tests rolled back location changes and did not create permanent GPS records. New real shop data may appear as users exercise the released registration flow. No customer GPS location was manually created by the assistant.
 
 ## WhatsApp
 Confirmed USE ME owner number: `+94 75 235 1751`.
 - Pre-filled WhatsApp order message, initiated by customer/owner, remains functional.
 - Automatic WhatsApp Cloud API sends cannot start without Meta approved phone number ID, access token, and approved templates where required. Existing Cloudflare Worker secret names do not include a WhatsApp or Meta token.
 - Never insert Meta credentials into GitHub, browser source, a message link, or this QA document.
+
+## Post-deployment confirmation
+- Live Worker verified as 12 assets, new locations.js present, latest deployment using 100% traffic.
+- Mobile browser verified /cart location UI and active route. Additional screenshots encountered Cloudflare browser-rendering rate limits.
+- Strict DB check constraints require all four fields or all NULL for a GPS point; migration applied.
+- Android GPS permission, map tile loading and turn-by-turn road directions should still be tested by the Owner. Google Maps handles road navigation on an explicit click, while the embedded map shows pins and an approximate (non-road) connector.
