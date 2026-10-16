@@ -45,7 +45,8 @@ window.usemeShopSavedLocation=function(row){
  if(row&&row.latitude!=null&&row.longitude!=null){
   savedShopPosition=clean({lat:row.latitude,lng:row.longitude,accuracy:row.location_accuracy_m});
   txt('savedShopGpsStatus','✓ Shop GPS location already saved. Last shared: '+new Date(row.location_shared_at).toLocaleString('en-LK')+'.');
- }else{savedShopPosition=null;txt('savedShopGpsStatus','No shop GPS coordinates saved. Entered pickup address remains available.')}
+  const preview=$('previewLocation_pickup');if(preview)preview.disabled=false;
+ }else{savedShopPosition=null;txt('savedShopGpsStatus','No shop GPS coordinates saved. Entered pickup address remains available.');const preview=$('previewLocation_pickup');if(preview&&!drafts.has('pickup'))preview.disabled=true;}
 };
 window.usemeSaveShopLocationFromDraft=async function(shopId,scope){
  const p=drafts.get(scope);if(!p)return {saved:false,skipped:true};
@@ -160,7 +161,7 @@ async function showMap(pins,view){
   for(const item of points){
    const icon=L.divIcon({className:'useme-map-pin',html:'<span style="background:'+colors[item.kind]+'">'+icons[item.kind]+'</span>',iconSize:[38,38],iconAnchor:[19,38]});
    const marker=L.marker([item.p.lat,item.p.lng],{icon}).addTo(activeMap);
-   marker.bindPopup(item.name);if(item.kind==='owner')ownerPin=marker;
+   const label=document.createElement('div');label.textContent=item.name;marker.bindPopup(label);if(item.kind==='owner')ownerPin=marker;
   }
   if(points.length>1)L.polyline(points.map(x=>[x.p.lat,x.p.lng]),{color:'#188bc1',weight:3,opacity:.7,dashArray:'7 9'}).addTo(activeMap);
   activeMap.fitBounds(L.latLngBounds(points.map(x=>[x.p.lat,x.p.lng])).pad(.28),{maxZoom:16});
