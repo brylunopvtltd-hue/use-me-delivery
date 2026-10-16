@@ -629,7 +629,14 @@ window.addEventListener('popstate',navigateToUrl);
 
 function filterCategories(){
  const q=(document.getElementById('search')?.value||'').trim().toLowerCase();
- document.querySelectorAll('#categoryGrid article').forEach(e=>e.classList.toggle('hidden',!!q&&!e.textContent.toLowerCase().includes(q)));
+ const chosenCategory=new URLSearchParams(location.search).get('category');
+ const tiles=[...document.querySelectorAll('#categoryGrid article')];
+ const supportsCategory=!!chosenCategory&&tiles.some(e=>e.dataset.category===chosenCategory);
+ for(const tile of tiles){
+  const wrongCategory=supportsCategory&&tile.dataset.category!==chosenCategory;
+  const wrongSearch=!!q&&!tile.textContent.toLowerCase().includes(q);
+  tile.classList.toggle('hidden',wrongCategory||wrongSearch);
+ }
  const cards=[...document.querySelectorAll('#liveProducts .v3-product-card')];
  let count=0;
  for(const card of cards){
