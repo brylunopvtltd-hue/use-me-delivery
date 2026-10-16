@@ -16,7 +16,7 @@ const statusNext={
  preparing:['ready','cancelled'],ready:['out_for_delivery','delivered','cancelled'],
  out_for_delivery:['delivered','cancelled'],delivered:[],cancelled:[]
 };
-let managerOrders=[],managerItems=new Map(),managerEvents=new Map();
+let managerOrders=[],managerItems=new Map(),managerEvents=new Map(),managerShops=new Map(),managerPickups=new Map();
 let phase4Busy=false,noticeUserId=null,noticeChannel=null,unreadNotifications=0;
 function textStatus(id,text){const node=$(id);if(node)node.textContent=text;}
 function empty(node,heading,body,callback){
@@ -26,11 +26,45 @@ function empty(node,heading,body,callback){
  node.append(box);
 }
 function visible(page){return $(page)?.classList.contains('active')}
+
+const ownerWhatsAppNumber='94752351751';
+const displayStatus=status=>({
+ pending:'Order received · Owner review',accepted:'Owner confirmed · Going to shop',
+ preparing:'Buying products at shop',ready:'Products purchased · Ready for delivery',
+ out_for_delivery:'Out for delivery',delivered:'Delivered to customer',cancelled:'Cancelled'
+})[status]||titleCase(status);
+function orderMessage(o,items,shop,pickup){
+ const q=quoteSummary(o);
+ const lines=[
+  '🛍️ USE ME — CUSTOMER ORDER',
+  'Order: '+o.id,
+  'Date: '+date(o.created_at),
+  'Shop: '+(shop?.name||'USE ME direct service'),
+  'Pickup address: '+(pickup?.pickup_address||'Shop pickup address not added'),
+  'Shop phone: '+(pickup?.contact_phone||'Not added'),
+  pickup?.pickup_notes?'Pickup notes: '+pickup.pickup_notes:'',
+  '--- PRODUCTS ---',
+  ...(items.length?items.map(x=>'• '+x.product_name+' × '+x.quantity+' = '+money(Number(x.unit_price_lkr)*x.quantity)):['Service: '+titleCase(o.service_type),'Notes: '+(o.order_notes||'Not provided')]),
+  '--- CUSTOMER ---',
+  'Customer: '+o.recipient_name,
+  'Phone: '+o.recipient_phone,
+  'Delivery address: '+o.delivery_address,
+  'Distance estimate: '+(o.delivery_distance_km??'N/A')+' km',
+  'Items estimate: '+money(o.items_subtotal_lkr),
+  'Delivery estimate: '+money(o.delivery_fee_lkr),
+  'Total estimate: '+money(Number(o.items_subtotal_lkr)+Number(o.delivery_fee_lkr)),
+  q.confirmed?'Confirmed total: '+money(q.items+q.fee):'Final price pending USE ME Owner confirmation',
+  'Status: '+displayStatus(o.status),
+  'Owner dashboard: '+location.origin+'/seller?order='+encodeURIComponent(o.id)
+ ];
+ return lines.filter(Boolean).join('\n');
+}
+
 function quoteSummary(o){
  if(o.quote_confirmed_at){
-  return {label:'Owner-confirmed quote',items:Number(o.final_items_subtotal_lkr),fee:Number(o.final_delivery_fee_lkr),confirmed:true};
+  return {label:'USE ME Owner-confirmed quote',items:Number(o.final_items_subtotal_lkr),fee:Number(o.final_delivery_fee_lkr),confirmed:true};
  }
- return {label:'Estimate only · owner confirmation pending',items:Number(o.items_subtotal_lkr||0),fee:Number(o.delivery_fee_lkr||0),confirmed:false};
+ return {label:'Estimated · USE ME Owner will confirm',items:Number(o.items_subtotal_lkr||0),fee:Number(o.delivery_fee_lkr||0),confirmed:false};
 }
 function initUi(){
  const management=$('managementPanel');
@@ -65,7 +99,7 @@ function metricsUpdate(orders,role){
  const confirmed=orders.filter(x=>!!x.quote_confirmed_at).length;
  const complete=orders.filter(x=>x.status==='delivered').length;
  const figures=[
- ['Pending',pending],['Active',active],['Quotes confirmed',confirmed],['Delivered',complete]
+ ['New pickup requests',pending],['Buying / delivery',active],['Quotes confirmed',confirmed],['Delivered',complete]
  ];
  for(const [label,value] of figures){
   const tile=el('div','v4-metric');tile.append(el('span','',label),el('strong','',value));node.append(tile);
@@ -105,7 +139,7 @@ function timeline(order,events){
  }
  for(const ev of events||[]){
   const row=el('div','v4-event');
-  row.append(el('b','',titleCase(ev.new_status)),el('small','',date(ev.created_at)));
+  row.append(el('b','',displayStatus(ev.new_status)),el('small','',date(ev.created_at)));
   wrap.append(row);
  }
  return wrap;
@@ -119,13 +153,31 @@ function renderManagerOrders(){
   (filter==='all'||o.status===filter)&&
   (!term||[o.id,o.recipient_name,o.recipient_phone,o.service_type,o.delivery_address].join(' ').toLowerCase().includes(term))
  );
- if(!results.length){empty(list,'No matching orders','New orders will appear here when customers submit them.');return}
+ if(!results.length){empty(list,'No customer orders yet','When someone orders from a listed shop, the full order appears here for USE ME Owner to buy and deliver.');return}
  for(const o of results){
   const card=el('article','v4-order-card');card.id='usemeManaged_'+o.id;
   const heading=el('div','v4-order-heading');
   const left=el('div');left.append(el('small','v4-muted',date(o.created_at)),el('h3','',titleCase(o.service_type)+' · #'+o.id.slice(0,8)));
-  const badge=el('span','v4-status v4-status-'+o.status,titleCase(o.status));heading.append(left,badge);card.append(heading);
-  const recipient=el('p','v4-order-recipient',o.recipient_name+' · '+o.recipient_phone+' · '+o.delivery_address);
+  const badge=el('span','v4-status v4-status-'+o.status,displayStatus(o.status));heading.append(left,badge);card.append(heading);
+  const shop=managerShops.get(o.shop_id),pickup=managerPickups.get(o.shop_id);
+  const pickupPanel=el('div','v4-pickup-box');
+  pickupPanel.append(el('small','v4-pickup-kicker','🏪 STORE PICKUP · USE ME OWNER ONLY'));
+  pickupPanel.append(el('h4','',shop?.name||'USE ME direct order — no partner shop'));
+  if(o.shop_id){
+   pickupPanel.append(el('p','',pickup?.pickup_address||'Pickup address not supplied. Request details from the shop partner.'));
+   pickupPanel.append(el('small','v4-muted','Shop contact: '+(pickup?.contact_phone||'Not provided')));
+   if(pickup?.pickup_notes)pickupPanel.append(el('small','v4-muted','Pickup instructions: '+pickup.pickup_notes));
+   if(pickup?.contact_phone){
+    const phone=el('a','v4-pickup-link','📞 Call shop');
+    phone.href='tel:'+pickup.contact_phone.replace(/[^+0-9]/g,'');
+    pickupPanel.append(phone);
+   }
+   if(pickup?.map_url&&/^https:\/\//.test(pickup.map_url)){
+    const map=el('a','v4-pickup-link','📍 Open Maps');map.href=pickup.map_url;map.target='_blank';map.rel='noopener noreferrer';pickupPanel.append(map);
+   }
+  }
+  card.append(pickupPanel);
+  const recipient=el('p','v4-order-recipient','Customer: '+o.recipient_name+' · '+o.recipient_phone+' · '+o.delivery_address);
   card.append(recipient);
   const q=quoteSummary(o);
   const amount=el('div','v4-quote-summary');
@@ -141,6 +193,18 @@ function renderManagerOrders(){
    card.append(d);
   }
   card.append(timeline(o,managerEvents.get(o.id)||[]));
+  const ownerTools=el('div','v4-owner-whatsapp-tools');
+  const share=el('a','btn v4-whatsapp-share','💬 WhatsApp order details');
+  share.href='https://wa.me/'+ownerWhatsAppNumber+'?text='+encodeURIComponent(orderMessage(o,lines,shop,pickup));
+  share.target='_blank';share.rel='noopener noreferrer';share.title='Opens WhatsApp message composer; the message is not sent automatically';
+  const copy=el('button','btn soft','📋 Copy order details');
+  copy.onclick=async()=>{
+   try{await navigator.clipboard.writeText(orderMessage(o,lines,shop,pickup));copy.textContent='Copied ✓'}
+   catch(e){alert('Copy unavailable. Use WhatsApp order details instead.')}
+  };
+  ownerTools.append(share,copy);
+  ownerTools.append(el('small','v4-muted','WhatsApp opens a pre-filled message; sending requires your confirmation. Automatic WhatsApp alerts need Business API integration.'));
+  card.append(ownerTools);
   if(usemeRole==='owner'&&!q.confirmed&&!closed(o.status)){
    const form=el('div','v4-quote-form');
    form.append(el('h4','','Owner: Confirm final customer quote'));
@@ -153,7 +217,7 @@ function renderManagerOrders(){
    const deliveryLabel=el('label','','Final delivery charge (LKR)');
    const deliveryInput=el('input');deliveryInput.type='number';deliveryInput.min='250';deliveryInput.max='100000';deliveryInput.step='.01';deliveryInput.value=String(o.delivery_fee_lkr||250);
    deliveryLabel.append(deliveryInput);fields.append(itemsLabel,deliveryLabel);form.append(fields);
-   const action=el('button','btn','Confirm quote & notify customer');
+   const action=el('button','btn','Confirm customer quote & continue to shop pickup');
    const response=el('p','v4-operation-status');
    action.onclick=async()=>{
     const itemTotal=Number(itemInput.value),delivery=Number(deliveryInput.value);
@@ -177,7 +241,7 @@ function renderManagerOrders(){
    const controls=el('div','v4-status-controls');
    if(allowed.length){
     const select=el('select');select.setAttribute('aria-label','Next status for order '+o.id.slice(0,8));
-    for(const state of allowed){const option=el('option','',titleCase(state));option.value=state;select.append(option)}
+    for(const state of allowed){const option=el('option','',displayStatus(state));option.value=state;select.append(option)}
     const btn=el('button','btn dark','Update status');
     const msg=el('small','v4-operation-status');
     btn.onclick=async()=>{
@@ -208,28 +272,30 @@ window.loadManagedOrders=async function(){
  const roleResult=await db().rpc('my_useme_role');
  if(roleResult.error){panel.classList.add('hidden');return}
  usemeRole=roleResult.data||'guest';
- if(!['owner','seller'].includes(usemeRole)){panel.classList.add('hidden');return}
+ if(usemeRole!=='owner'){panel.classList.add('hidden');return}
  panel.classList.remove('hidden');
  initUi();
- textStatus('managementRoleNote',usemeRole==='owner'
-   ?'Verified USE ME Owner · control orders, final quotes, shop approvals and inventory.'
-   :'Approved Seller · manage orders for your shop. Final delivery quotes need USE ME owner approval.');
- let query=db().from('orders').select('id,customer_id,shop_id,service_type,status,recipient_name,recipient_phone,delivery_address,order_notes,created_at,updated_at,delivery_fee_lkr,items_subtotal_lkr,final_items_subtotal_lkr,final_delivery_fee_lkr,quote_confirmed_at').order('created_at',{ascending:false}).limit(100);
- if(usemeRole==='seller'){
-   const shops=await db().from('shops').select('id').eq('owner_id',user.id).eq('status','approved').limit(100);
-   if(shops.error){list.textContent='Shop verification failed: '+shops.error.message;return}
-   const ids=(shops.data||[]).map(s=>s.id);
-   if(!ids.length){list.textContent='No approved shop for this account.';return}
-   query=query.in('shop_id',ids);
- }
+ textStatus('managementRoleNote','Only USE ME Owner handles orders. Pick up from listed shops, purchase items and deliver. Shop partners never see customer order details.');
+ const query=db().from('orders').select('id,customer_id,shop_id,service_type,status,recipient_name,recipient_phone,delivery_address,order_notes,created_at,updated_at,delivery_distance_km,delivery_fee_lkr,items_subtotal_lkr,final_items_subtotal_lkr,final_delivery_fee_lkr,quote_confirmed_at').order('created_at',{ascending:false}).limit(100);
  const {data,error}=await query;
  if(error){list.textContent='Could not load orders: '+error.message;return}
  managerOrders=data||[];
+ const pickupIds=[...new Set(managerOrders.map(o=>o.shop_id).filter(Boolean))];
+ managerShops=new Map();managerPickups=new Map();
+ if(pickupIds.length){
+  const [sRes,pRes]=await Promise.allSettled([
+   db().from('shops').select('id,name').in('id',pickupIds),
+   db().from('shop_pickup_details').select('shop_id,pickup_address,contact_phone,pickup_notes,map_url').in('shop_id',pickupIds)
+  ]);
+  if(sRes.status==='fulfilled'&&!sRes.value.error)
+   managerShops=new Map((sRes.value.data||[]).map(shop=>[shop.id,shop]));
+  if(pRes.status==='fulfilled'&&!pRes.value.error)
+   managerPickups=new Map((pRes.value.data||[]).map(details=>[details.shop_id,details]));
+ }
  await collectDetails(managerOrders);
  metricsUpdate(managerOrders,usemeRole);
  renderManagerOrders();
- if(usemeRole==='owner')window.loadShopApprovals();
- else $('shopApprovalPanel')?.classList.add('hidden');
+ await window.loadShopApprovals();
 };
 window.loadShopApprovals=async function(){
  const panel=$('shopApprovalPanel'),box=$('shopApprovalList');
@@ -291,7 +357,7 @@ window.loadMyOrders=async function(){
   card.id='usemeOrder_'+o.id;
   const head=el('div','v4-order-heading');
   const title=el('div');title.append(el('small','v4-muted',date(o.created_at)),el('h3','',titleCase(o.service_type)+' · #'+o.id.slice(0,8)));
-  head.append(title,el('span','v4-status v4-status-'+o.status,titleCase(o.status)));card.append(head);
+  head.append(title,el('span','v4-status v4-status-'+o.status,displayStatus(o.status)));card.append(head);
   const quote=quoteSummary(o);
   const amount=el('div','v4-quote-summary');
   amount.append(el('small','',quote.label),el('strong','',money(quote.items+quote.fee)));
@@ -346,7 +412,7 @@ window.loadNotifications=async function(){
    const open=el('button','btn soft','View order →');
    open.onclick=async()=>{
     const role=await db().rpc('my_useme_role');
-    const canManage=!role.error&&['owner','seller'].includes(role.data);
+    const canManage=!role.error&&role.data==='owner';
     if(canManage){
      go('seller',{url:'/seller?order='+encodeURIComponent(n.order_id)});
      await window.loadManagedOrders();
