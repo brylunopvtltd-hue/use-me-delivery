@@ -1,0 +1,76 @@
+/* USE ME Phase 4 — order management & customer lifecycle. Scoped to non-home pages only. */
+#seller .v4-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:14px 0 19px}
+#seller .v4-metric{background:linear-gradient(150deg,#f1f6ff,#ffffff);border:1px solid #e1e9f7;padding:17px 15px;border-radius:20px;display:flex;flex-direction:column;gap:6px}
+#seller .v4-metric span{font-size:12px;font-weight:750;color:#55708d}
+#seller .v4-metric strong{font-size:clamp(23px,3.3vw,32px);line-height:1.1;color:#0a214b;letter-spacing:-.5px}
+#seller .v4-orders-toolbar{display:grid;grid-template-columns:1fr minmax(140px,190px) auto;gap:10px;align-items:center;margin:14px 0 20px}
+#seller .v4-orders-toolbar input,#seller .v4-orders-toolbar select{width:100%;min-width:0;border:1px solid #dfe7f4;border-radius:14px;background:#f8fbff;padding:13px 12px;min-height:45px;font:inherit;color:#10274a}
+#seller .v4-shop-stats{font-size:13px;font-weight:900;letter-spacing:.1px;color:#174e63;margin:14px 0;padding:13px;background:#effbf5;border-radius:14px}
+#seller .v4-shop-row{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:16px 19px;border:1px solid #e5eaf3;border-radius:19px;background:#fff;margin:10px 0}
+#seller .v4-shop-row h4{font-size:16px;line-height:1.3;color:#0a2141;margin:0 0 6px}
+#seller .v4-shop-actions{display:flex;flex-wrap:wrap;gap:7px}
+#seller .v4-shop-actions .btn{font-size:12px;min-height:37px;border-radius:12px}
+:is(#seller,#orders) .v4-order-card{background:#fff;border:1px solid #e7ecf5;border-radius:23px;padding:20px 22px;margin-bottom:13px;box-shadow:0 6px 20px #192f530b}
+:is(#seller,#orders) .v4-order-heading{display:flex;align-items:start;justify-content:space-between;gap:8px;margin-bottom:15px}
+:is(#seller,#orders) .v4-order-heading h3{font-size:clamp(17px,2.9vw,21px);font-weight:900;letter-spacing:-.45px;color:#132848;margin:4px 0}
+:is(#seller,#orders) .v4-muted{font-size:11px;color:#71849a;line-height:1.45}
+:is(#seller,#orders) .v4-status{display:inline-flex;align-items:center;font-weight:900;font-size:11px;border-radius:999px;padding:7px 12px;text-transform:capitalize;letter-spacing:.2px;white-space:nowrap;background:#eff3f8;color:#425576}
+:is(#seller,#orders) .v4-status-pending{background:#fff0c7;color:#7f5300}
+:is(#seller,#orders) .v4-status-accepted{background:#dceeff;color:#09588e}
+:is(#seller,#orders) .v4-status-preparing{background:#e9e5fc;color:#6541a6}
+:is(#seller,#orders) .v4-status-ready{background:#d9f8f1;color:#0c7560}
+:is(#seller,#orders) .v4-status-out_for_delivery{background:#d9f4ff;color:#026c97}
+:is(#seller,#orders) .v4-status-delivered{background:#dff8e5;color:#157343}
+:is(#seller,#orders) .v4-status-cancelled{background:#ffe8e8;color:#a52a2a}
+:is(#seller,#orders) .v4-order-recipient{font-size:13px;line-height:1.6;color:#47566a;margin:0 0 14px;overflow-wrap:anywhere}
+:is(#seller,#orders) .v4-quote-summary{display:flex;flex-direction:column;gap:6px;background:#f5f8ff;padding:14px 16px;border-radius:16px;border:1px solid #edf2fb}
+:is(#seller,#orders) .v4-quote-summary>small:first-child{font-size:12px;font-weight:850;color:#405878}
+:is(#seller,#orders) .v4-quote-summary>strong{font-size:clamp(23px,3.6vw,30px);font-weight:950;line-height:1.15;letter-spacing:-.8px;color:#067150}
+:is(#seller,#orders) .v4-order-note{font-size:13px;background:#fff8e7;color:#685029;border-radius:12px;padding:10px 12px}
+:is(#seller,#orders) .v4-timeline{border-left:2px solid #dce6f5;margin:20px 3px 14px 11px;padding-left:16px;display:grid;gap:10px}
+:is(#seller,#orders) .v4-timeline-heading{font-size:12px;font-weight:850;color:#274363;margin-bottom:3px}
+:is(#seller,#orders) .v4-event{display:flex;flex-wrap:wrap;justify-content:space-between;gap:5px 12px;position:relative;color:#34506a;font-size:12px}
+:is(#seller,#orders) .v4-event:before{content:'';position:absolute;left:-22px;top:5px;width:9px;height:9px;border:2px solid #fff;border-radius:99px;background:#13ad7a;box-shadow:0 0 0 1px #a7dcca}
+:is(#seller,#orders) .v4-event b{font-size:12px}
+:is(#seller,#orders) .v4-order-details{background:#fff;border-radius:13px;border:1px solid #e9eff8;padding:10px 13px;margin-top:13px}
+:is(#seller,#orders) .v4-order-details summary{cursor:pointer;color:#0d5f94;font-weight:850;font-size:13px}
+:is(#seller,#orders) .v4-order-details p{margin:9px 0 0;font-size:12px;color:#445873}
+:is(#seller,#orders) .v4-quote-form{margin-top:16px;background:#fef9ec;border-radius:17px;padding:17px;border:1px solid #f5e8bf}
+:is(#seller,#orders) .v4-quote-form h4{font-size:16px;color:#2c3244;margin:0 0 13px}
+:is(#seller,#orders) .v4-quote-fields{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:12px}
+:is(#seller,#orders) .v4-quote-fields label{font-size:12px;font-weight:750;color:#47546d;display:flex;gap:7px;flex-direction:column}
+:is(#seller,#orders) .v4-quote-fields input{min-width:0;width:100%;min-height:43px;padding:10px 12px;border-radius:12px;background:white;border:1px solid #d8deea;color:#153253}
+:is(#seller,#orders) .v4-quote-fields input:disabled{background:#e7e9ed;color:#52687b}
+:is(#seller,#orders) .v4-status-controls,:is(#seller,#orders) .v4-customer-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px 12px;margin-top:13px}
+:is(#seller,#orders) .v4-status-controls select{border:1px solid #dce4f0;border-radius:13px;min-height:44px;min-width:165px;padding:9px 10px;background:#fff;color:#102643}
+:is(#seller,#orders) .v4-status-controls .btn,:is(#seller,#orders) .v4-customer-actions .btn{font-weight:850;border-radius:13px;min-height:41px}
+:is(#seller,#orders) .v4-operation-status{font-size:12px;color:#a44527;overflow-wrap:anywhere}
+#orders .v4-customer-order{max-width:930px;margin-left:auto;margin-right:auto}
+#orders .v4-highlight-order{outline:3px solid #f8b933;outline-offset:2px}
+#orders .v4-customer-order>small:last-child{display:block;margin-top:15px}
+#notifications .v4-notice-actions{display:flex;justify-content:flex-end;margin:6px 3px 15px}
+#notifications .v4-notification{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;background:#fff;border:1px solid #e5ebf5;padding:17px 20px;border-radius:20px;box-shadow:0 6px 18px #142a480b;margin:11px 0}
+#notifications .v4-notification.v4-unread{border-left:5px solid #f7b928}
+#notifications .v4-notification.v4-read{opacity:.82}
+#notifications .v4-notice-content{min-width:0;flex:1}
+#notifications .v4-notice-content h3{margin:0 0 7px;font-size:16px;color:#14294b}
+#notifications .v4-notice-content p{font-size:13px;line-height:1.55;color:#53627a;margin:0 0 7px;overflow-wrap:anywhere}
+#notifications .v4-notice-buttons{display:flex;flex-wrap:wrap;gap:7px}
+#notifications .v4-notice-buttons button{min-height:36px;font-size:11px;padding:8px 11px;border-radius:12px}
+:is(#seller,#orders,#notifications) .v4-empty{padding:34px 18px;border:1px dashed #d3def0;border-radius:21px;background:#f9fbff;text-align:center}
+:is(#seller,#orders,#notifications) .v4-empty-icon{font-size:42px}
+:is(#seller,#orders,#notifications) .v4-empty h3{font-size:20px;color:#1b3655;margin:7px 0}
+:is(#seller,#orders,#notifications) .v4-empty p{font-size:13px;color:#71839a;line-height:1.5}
+:is(#seller,#orders,#notifications) .v4-empty button{margin:auto}
+@media(max-width:680px){
+ #seller .v4-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ #seller .v4-orders-toolbar{grid-template-columns:1fr 1fr}
+ #seller .v4-orders-toolbar input{grid-column:1/-1}
+ #seller .v4-shop-row{align-items:stretch;flex-direction:column}
+ :is(#seller,#orders) .v4-order-card{padding:15px 13px;border-radius:18px}
+ :is(#seller,#orders) .v4-order-heading{align-items:flex-start}
+ :is(#seller,#orders) .v4-order-heading h3{font-size:15px}
+ :is(#seller,#orders) .v4-quote-fields{grid-template-columns:1fr}
+ #notifications .v4-notification{padding:13px 14px;flex-direction:column}
+ #notifications .v4-notice-buttons{justify-content:flex-start}
+}
