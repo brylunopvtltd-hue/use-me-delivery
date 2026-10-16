@@ -307,6 +307,10 @@ window.loadShopApprovals=async function(){
  box.replaceChildren();
  if(error){box.textContent='Unable to list shops: '+error.message;return}
  const shops=(data||[]).sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1));
+ const info=shops.length?await db().from('shop_pickup_details')
+  .select('shop_id,pickup_address,contact_phone,pickup_notes,map_url')
+  .in('shop_id',shops.map(x=>x.id)):{data:[],error:null};
+ const pickupByShop=new Map((info.data||[]).map(x=>[x.shop_id,x]));
  const counts=el('div','v4-shop-stats','Pending '+shops.filter(x=>x.status==='pending').length+' · Approved '+shops.filter(x=>x.status==='approved').length+' · Suspended '+shops.filter(x=>x.status==='suspended').length);
  box.append(counts);
  if(!shops.length){empty(box,'No merchant applications','New registrations will appear here for owner review.');return}
@@ -314,9 +318,15 @@ window.loadShopApprovals=async function(){
   const row=el('article','v4-shop-row');
   const description=el('div');
   description.append(el('h4','',shop.name),el('small','v4-muted','Submitted '+date(shop.created_at)+' · '+titleCase(shop.status)));
+  const pickup=pickupByShop.get(shop.id);
+  const address=el('p',pickup?'v4-shop-pickup-summary':'v4-shop-pickup-summary v4-pickup-missing',
+   pickup?'📍 '+pickup.pickup_address+' · ☎ '+pickup.contact_phone:'⚠ Missing shop pickup address and contact number — cannot approve');
+  description.append(address);
+  if(pickup?.pickup_notes)description.append(el('small','v4-muted',pickup.pickup_notes));
   const actions=el('div','v4-shop-actions');
   for(const state of shop.status==='pending'?['approved','suspended']:shop.status==='approved'?['suspended']:['approved']){
    const button=el('button',state==='approved'?'btn':'btn soft',state==='approved'?'✓ Approve':'Suspend');
+   if(state==='approved'&&!pickup){button.disabled=true;button.title='Shop owner must save pickup address and phone before approval'}
    button.onclick=async()=>{
     if(!confirm((state==='approved'?'Approve ':'Suspend ')+shop.name+'?'))return;
     button.disabled=true;
