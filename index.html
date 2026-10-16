@@ -574,7 +574,7 @@ function renderSellerProductRows(items,shopId){
   };
   const publication=document.createElement('button');publication.className='btn';publication.textContent=p.active?'Unpublish':'Publish';
   publication.onclick=async()=>{
-   if(!p.active&&(!p.image_path||Number(stock.value)<=0)){alert('A photo and positive stock are required to publish.');return}
+   if(!p.active&&(!p.image_path||Number(p.stock)<=0)){alert('Save positive stock first, then publish. A real photo and approved shop pickup address are required.');return}
    publication.disabled=true;
    const {error}=await usemeDb.from('products').update({active:!p.active}).eq('id',p.id).eq('shop_id',p.shop_id);
    if(error){alert(error.message);publication.disabled=false}else{await loadSellerProducts();await loadLiveProducts()}
@@ -583,17 +583,27 @@ function renderSellerProductRows(items,shopId){
   const swap=document.createElement('button');swap.className='btn soft';swap.textContent='Update photo';
   swap.onclick=async()=>{
    if(!replace.files?.length){alert('Select a replacement photo first.');return}
-   swap.disabled=true;let newPath=null;
+   swap.disabled=true;let newPath=null,committed=false;
    try{
     newPath=await uploadProductPhoto(p.shop_id,replace.files[0]);
     const {error}=await usemeDb.from('products').update({image_path:newPath}).eq('id',p.id).eq('shop_id',p.shop_id);
     if(error)throw error;
-    if(p.image_path)await usemeDb.storage.from(USEME_PHOTO_BUCKET).remove([p.image_path]);
-    await loadSellerProducts();await loadLiveProducts();
+    committed=true;
+    // Once DB points to the new image, NEVER delete it because old-image
+    // cleanup or UI refresh failed. Remove the old photo only as best effort.
+    if(p.image_path&&p.image_path!==newPath){
+     try{const clean=await usemeDb.storage.from(USEME_PHOTO_BUCKET).remove([p.image_path]);
+       if(clean.error)console.warn('Old photo cleanup postponed:',clean.error.message);
+     }catch(cleanError){console.warn('Old photo cleanup postponed',cleanError)}
+    }
+    await Promise.allSettled([loadSellerProducts(),loadLiveProducts()]);
+    alert('Product photo updated successfully.');
    }catch(e){
-    if(newPath)await usemeDb.storage.from(USEME_PHOTO_BUCKET).remove([newPath]);
-    alert('Could not update photo: '+(e.message||String(e)));swap.disabled=false;
-   }
+    if(newPath&&!committed){
+     try{await usemeDb.storage.from(USEME_PHOTO_BUCKET).remove([newPath])}catch(cleanError){}
+    }
+    alert('Could not update photo: '+(e.message||String(e)));
+   }finally{swap.disabled=false}
   };
   actions.append(save,publication,replace,swap);
   body.append(title,category,fields,actions);
