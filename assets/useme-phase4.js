@@ -42,6 +42,10 @@ function orderMessage(o,items,shop,pickup){
   'Shop: '+(shop?.name||'USE ME direct service'),
   'Pickup address: '+(pickup?.pickup_address||'Shop pickup address not added'),
   'Shop phone: '+(pickup?.contact_phone||'Not added'),
+  pickup?.latitude!=null?'Shop GPS: '+pickup.latitude+', '+pickup.longitude:'',
+  order?.delivery_latitude!=null?'Customer GPS: '+order.delivery_latitude+', '+order.delivery_longitude:'',
+  pickup?.latitude!=null?'Shop map: https://www.google.com/maps/search/?api=1&query='+pickup.latitude+','+pickup.longitude:'',
+  order?.delivery_latitude!=null?'Delivery map: https://www.google.com/maps/search/?api=1&query='+order.delivery_latitude+','+order.delivery_longitude:'',
   pickup?.pickup_notes?'Pickup notes: '+pickup.pickup_notes:'',
   '--- PRODUCTS ---',
   ...(items.length?items.map(x=>'• '+x.product_name+' × '+x.quantity+' = '+money(Number(x.unit_price_lkr)*x.quantity)):['Service: '+titleCase(o.service_type),'Notes: '+(o.order_notes||'Not provided')]),
@@ -179,6 +183,15 @@ function renderManagerOrders(){
   card.append(pickupPanel);
   const recipient=el('p','v4-order-recipient','Customer: '+o.recipient_name+' · '+o.recipient_phone+' · '+o.delivery_address);
   card.append(recipient);
+  const gpsStatus=el('div','v4-gps-status');
+  gpsStatus.append(el('small','',pickup?.latitude!=null?'🏪 Shop GPS saved':'🏪 Shop GPS not shared'),
+    el('small','',o.delivery_latitude!=null?'🏠 Customer GPS shared':'🏠 Customer GPS not shared'));
+  const gpsButton=el('button','btn soft v4-map-route-action','🗺️ View pickup + delivery map');
+  gpsButton.onclick=()=>{
+   if(typeof window.usemeOpenOwnerRouteMap==='function')window.usemeOpenOwnerRouteMap(o,shop,pickup);
+   else alert('Interactive maps are loading; refresh and try again.');
+  };
+  gpsStatus.append(gpsButton);card.append(gpsStatus);
   const q=quoteSummary(o);
   const amount=el('div','v4-quote-summary');
   amount.append(el('small','',q.label),el('strong','',money(q.items+q.fee)));
@@ -276,7 +289,7 @@ window.loadManagedOrders=async function(){
  panel.classList.remove('hidden');
  initUi();
  textStatus('managementRoleNote','Only USE ME Owner handles orders. Pick up from listed shops, purchase items and deliver. Shop partners never see customer order details.');
- const query=db().from('orders').select('id,customer_id,shop_id,service_type,status,recipient_name,recipient_phone,delivery_address,order_notes,created_at,updated_at,delivery_distance_km,delivery_fee_lkr,items_subtotal_lkr,final_items_subtotal_lkr,final_delivery_fee_lkr,quote_confirmed_at').order('created_at',{ascending:false}).limit(100);
+ const query=db().from('orders').select('id,customer_id,shop_id,service_type,status,recipient_name,recipient_phone,delivery_address,order_notes,created_at,updated_at,delivery_distance_km,delivery_latitude,delivery_longitude,delivery_location_accuracy_m,delivery_location_shared_at,delivery_fee_lkr,items_subtotal_lkr,final_items_subtotal_lkr,final_delivery_fee_lkr,quote_confirmed_at').order('created_at',{ascending:false}).limit(100);
  const {data,error}=await query;
  if(error){list.textContent='Could not load orders: '+error.message;return}
  managerOrders=data||[];
@@ -285,7 +298,7 @@ window.loadManagedOrders=async function(){
  if(pickupIds.length){
   const [sRes,pRes]=await Promise.allSettled([
    db().from('shops').select('id,name').in('id',pickupIds),
-   db().from('shop_pickup_details').select('shop_id,pickup_address,contact_phone,pickup_notes,map_url').in('shop_id',pickupIds)
+   db().from('shop_pickup_details').select('shop_id,pickup_address,contact_phone,pickup_notes,map_url,latitude,longitude,location_accuracy_m,location_shared_at').in('shop_id',pickupIds)
   ]);
   if(sRes.status==='fulfilled'&&!sRes.value.error)
    managerShops=new Map((sRes.value.data||[]).map(shop=>[shop.id,shop]));
@@ -344,7 +357,7 @@ window.loadMyOrders=async function(){
  const user=await currentUsemeUser();
  if(!user){box.textContent='Sign in at Profile to view your orders.';return}
  const {data,error}=await db().from('orders')
-  .select('id,service_type,shop_id,status,created_at,updated_at,delivery_fee_lkr,items_subtotal_lkr,final_items_subtotal_lkr,final_delivery_fee_lkr,quote_confirmed_at,order_notes')
+  .select('id,service_type,shop_id,status,created_at,updated_at,delivery_fee_lkr,items_subtotal_lkr,final_items_subtotal_lkr,final_delivery_fee_lkr,quote_confirmed_at,delivery_latitude,delivery_longitude,delivery_location_accuracy_m,delivery_location_shared_at,order_notes')
   .eq('customer_id',user.id).order('created_at',{ascending:false}).limit(60);
  box.replaceChildren();
  if(error){box.textContent='Unable to load your orders: '+error.message;return}
@@ -381,6 +394,23 @@ window.loadMyOrders=async function(){
    card.append(detail);
   }
   card.append(timeline(o,events.get(o.id)||[]));
+  const gpsBox=el('div','v4-customer-location');
+  const hasGps=o.delivery_latitude!=null&&o.delivery_longitude!=null;
+  gpsBox.append(el('strong','','📍 Delivery GPS location'));
+  gpsBox.append(el('p','',hasGps
+   ?'✓ Location shared with USE ME Owner on '+date(o.delivery_location_shared_at)+'. You may update or delete it.'
+   :'Optional: share your current location once to help USE ME Owner find your delivery address. Typed address remains valid.'));
+  if(!closed(o.status)){
+   const share=el('button','btn soft',hasGps?'◎ Update my GPS location':'◎ Share my current location once');
+   share.onclick=()=>window.usemeShareExistingOrderLocation?.(o.id,share);
+   gpsBox.append(share);
+  }
+  if(hasGps){
+   const clear=el('button','btn soft','Remove GPS coordinates');
+   clear.onclick=()=>window.usemeRemoveExistingOrderLocation?.(o.id,clear);
+   gpsBox.append(clear);
+  }
+  card.append(gpsBox);
   if(o.status==='pending'){
    const actions=el('div','v4-customer-actions');
    const button=el('button','btn soft','Cancel pending order');
