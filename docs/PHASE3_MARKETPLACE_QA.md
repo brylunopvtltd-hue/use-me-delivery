@@ -14,8 +14,23 @@ This file documents the rollout verification and seller-side tests. **Never plac
 - `/profile` loads the guest login/registration UI while keeping seller management hidden.
 - Homepage reference HTML was not altered.
 
+## Security and rollback-transaction results (2026-10-17)
+The checks below used temporary rows and simulated database role claims **inside ROLLBACK transactions**. No real customer orders, photo objects, or notifications were committed.
+
+- Verified public guest can list the 1 approved shop but not execute `is_owner`, `owns_shop`, `my_useme_role` or `create_customer_profile` helper RPCs.
+- Guest's approved-product RLS policy no longer relies on privileged owner helpers; a temporary published product remained visible in a rollback test.
+- Non-owner identity was denied access to `set_shop_approval`; admin checks remain server-side.
+- Checkout test: item unit price LKR 320 x 2 = LKR 640, 22-km delivery LKR 750, test stock 5 → 3, pending status and 3 database notifications.
+- Insufficient-stock test: request 2 units when only 1 exists was rejected; stock stayed 1, no order or notification persisted.
+- Cancellation test: a mock order was cancelled, stock automatically restored from 3 to 5, and one order status event recorded.
+- Repeat-cancellation test: second cancellation was blocked, status-transition count stayed 1, and stock remained 3 rather than doubling.
+- `my_useme_role()` now grants the seller dashboard role to any user who owns an approved shop, even if their underlying customer profile remains `customer`. Tested by temporarily setting an existing profile to customer then rolling back.
+- `/seller` is a dedicated mobile route to product management and authorized order/approval panels. A guest browser confirmed the sign-in notice while the privileged panels remain hidden.
+- The approved reference Homepage markup was preserved across this update.
+- Supabase security advisor now lists no **anonymous** SECURITY DEFINER execution warnings. Authenticated helper/RPC warnings remain by design, with server-side identity checks; leaked-password protection remains a configurable Auth warning.
+
 ## Seller acceptance test (requires real approved seller login)
-1. Sign in at `/profile`. Confirm only approved owned shops appear in Seller Product Studio.
+1. Sign in at `/profile`, then visit `/seller`. Confirm only approved owned shops appear in Seller Product Studio.
 2. Choose a genuine JPEG/PNG/WebP image below 12 MB. Check preview.
 3. Save product; verify unpublished status and uploaded image URL.
 4. Set stock and click Publish; verify visible on `/shop` in guest/private browser.
@@ -35,5 +50,5 @@ This file documents the rollout verification and seller-side tests. **Never plac
 
 ## Follow-ups
 - Actual authenticated photo upload and paid/order workflow were **not** impersonated or claimed tested during automated deployment because no seller and buyer credentials were supplied.
-- Supabase Auth leaked password protection and some pre-existing SECURITY DEFINER advisor warnings remain to review.
+- Supabase Auth leaked password protection is not enabled; this requires a project Auth setting. Authenticated SECURITY DEFINER warnings must be evaluated individually, not blindly revoked because some RPCs and RLS checks need them.
 - Improve pagination, multiple product photos, image moderation, seller analytics and notifications before general marketplace launch.
