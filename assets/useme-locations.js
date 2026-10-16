@@ -32,10 +32,10 @@ window.usemeCaptureLocation=async function(scope){
  txt(keys[scope],'Requesting your phone location (one-time snapshot)...');
  try{
   const p=await coordsFromBrowser();
-  drafts.set(scope,p);
+  drafts.set(scope,{...p,capturedAt:Date.now()});
   txt(keys[scope],'✓ Location ready: '+latLngText(p)+'. It will only be stored when you save/submit.');
   const preview=$('previewLocation_'+scope);if(preview)preview.disabled=false;
- }catch(e){txt(keys[scope],errMessage(e))}
+ }catch(e){drafts.delete(scope);txt(keys[scope],errMessage(e));const preview=$('previewLocation_'+scope);if(preview)preview.disabled=scope==='pickup'&&!!savedShopPosition?false:true}
 };
 window.usemeForgetDraftLocation=function(scope){
  drafts.delete(scope);txt(keys[scope],'Location not selected. You can still enter the address manually.');
@@ -50,6 +50,7 @@ window.usemeShopSavedLocation=function(row){
 };
 window.usemeSaveShopLocationFromDraft=async function(shopId,scope){
  const p=drafts.get(scope);if(!p)return {saved:false,skipped:true};
+ if(Date.now()-p.capturedAt>15*60*1000){drafts.delete(scope);throw Error('Your GPS pin is more than 15 minutes old. Tap Use my current location again.')}
  const client=db();if(!client)throw Error('Sign in and reconnect before saving');
  const {error}=await client.rpc('set_shop_pickup_coordinates',{p_shop_id:shopId,p_lat:p.lat,p_lng:p.lng,p_accuracy_m:p.accuracy});
  if(error)throw error;
@@ -60,6 +61,7 @@ window.usemeSaveShopLocationFromDraft=async function(shopId,scope){
 };
 window.usemeSaveOrderLocationFromDraft=async function(orderId,scope){
  const p=drafts.get(scope);if(!p)return {saved:false,skipped:true};
+ if(Date.now()-p.capturedAt>15*60*1000){drafts.delete(scope);throw Error('Your GPS pin is more than 15 minutes old. Tap Use my current location again.')}
  const client=db();if(!client)throw Error('Location not saved: offline');
  const {error}=await client.rpc('share_my_order_delivery_location',{p_order_id:orderId,p_lat:p.lat,p_lng:p.lng,p_accuracy_m:p.accuracy});
  if(error)throw error;
@@ -211,8 +213,16 @@ window.usemeOpenOwnerRouteMap=function(order,shop,pickup){
   },e=>{live.disabled=false;view.status.textContent=errMessage(e);if(ownerWatchId!==null){navigator.geolocation.clearWatch(ownerWatchId);ownerWatchId=null}},
   {enableHighAccuracy:true,maximumAge:3000,timeout:22000});
  });
+ live.id='usemeLiveOwnerGpsButton';
  showMap([pin('Shop pickup: '+(shop?.name||'Partner shop'),seller,'shop'),
           pin('Customer delivery',customer,'customer')],view);
 };
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden&&ownerWatchId!==null&&navigator.geolocation){
+  navigator.geolocation.clearWatch(ownerWatchId);ownerWatchId=null;
+  const button=$('usemeLiveOwnerGpsButton');
+  if(button){button.disabled=false;button.textContent='🛵 Start my live position on this map'}
+ }
+});
 window.addEventListener('pagehide',closeModal);
 })();
