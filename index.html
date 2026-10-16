@@ -47,6 +47,110 @@ header a.round{display:grid;place-items:center;color:inherit;text-decoration:non
 .ref3-home :is(.ref3-hero,.ref3-service,.ref3-categories>a,.ref3-promos>a){cursor:pointer}
 .bottom a{display:grid;place-items:center;text-decoration:none}
 a:focus-visible{outline:3px solid #ffc21c;outline-offset:3px}
+
+/* USE ME V3 - unified visual system for independent URL pages */
+.page:not(#home){padding:9px 4px 36px}
+.v3-page-stage{min-height:226px;position:relative;overflow:hidden;border-radius:27px;display:grid;grid-template-columns:58% 42%;background:linear-gradient(112deg,#071b40,#174d83);color:#fff;margin:6px 0 23px;box-shadow:0 12px 32px #1a335017;isolation:isolate}
+.v3-page-stage:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 82% 30%,#ffffff29,transparent 50%);z-index:-1}
+.v3-stage-shop,.v3-stage-cart{background:linear-gradient(112deg,#f9aa18,#ffdf7a)}
+.v3-stage-shop .v3-stage-copy,.v3-stage-cart .v3-stage-copy{color:#082043}
+.v3-stage-offers{background:linear-gradient(115deg,#0637b2,#0494ee)}
+.v3-stage-ride{background:linear-gradient(110deg,#0260b4,#56bff9)}
+.v3-stage-send{background:linear-gradient(110deg,#6523b2,#bb83f9)}
+.v3-stage-orders,.v3-stage-placeorder{background:linear-gradient(120deg,#07583d,#13ac65)}
+.v3-stage-notifications{background:linear-gradient(115deg,#1a3f96,#9070e8)}
+.v3-stage-saved{background:linear-gradient(120deg,#7c399a,#e874aa)}
+.v3-stage-profile{background:linear-gradient(115deg,#071735,#305788)}
+.v3-stage-activity{background:linear-gradient(115deg,#085f72,#50b7c6)}
+.v3-stage-messages{background:linear-gradient(120deg,#102f61,#4b7bbb)}
+.v3-stage-wholesale{background:linear-gradient(115deg,#063f3b,#39ad8b)}
+.v3-stage-product{background:linear-gradient(115deg,#16416e,#6b89cc)}
+.v3-stage-copy{padding:30px 0 25px 31px;z-index:2;align-self:center;min-width:0}
+.v3-stage-label{display:inline-block;background:#ffca30;color:#122242;border-radius:99px;padding:8px 13px;font-size:11px;font-weight:950;letter-spacing:.6px}
+.v3-page-stage h1{font-weight:950;font-size:clamp(29px,4.6vw,54px);line-height:1.05;letter-spacing:-1.6px;margin:16px 0 10px;color:inherit}
+.v3-stage-copy p{line-height:1.5;font-size:15px;margin:0;color:inherit;opacity:.95;max-width:530px}
+.v3-stage-art{display:block;width:100%;height:100%;min-height:226px;object-fit:cover;align-self:stretch;filter:drop-shadow(0 12px 26px #06163725);border-radius:0 27px 27px 0}
+.v3-stage-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:17px}
+.v3-stage-links a{display:inline-flex;align-items:center;gap:8px;border-radius:99px;background:#fff;color:#102149;text-decoration:none;padding:9px 13px;font-weight:850;font-size:12px;box-shadow:0 4px 12px #00142818}
+.v3-stage-links a:first-child{background:#ffc823;color:#0f1c37}
+.page:not(#home) .market-crumb{font-size:12px}
+.page:not(#home)>h1{font-size:clamp(22px,3.2vw,35px);letter-spacing:-1px;margin:12px 8px}
+.page:not(#home)>p.muted{margin:0 8px 17px}
+.page:not(#home) .card{border-radius:25px;border:1px solid #e9edf5;box-shadow:0 9px 32px #12294a10;background:#fff}
+.page:not(#home) .card h2{letter-spacing:-.55px}
+.page:not(#home) .section-head{margin:22px 2px 12px}
+.page:not(#home) .section-head h2{font-size:clamp(19px,3vw,25px);letter-spacing:-.5px}
+.page:not(#home) .btn{border-radius:15px;font-weight:850;min-height:42px}
+.page:not(#home) .btn.dark{background:#10203c}
+.page:not(#home) .field :is(input,textarea,select){border-radius:14px;min-height:48px;background:#f8faff;max-width:100%;font-size:14px}
+.page:not(#home) .tabs{display:flex;gap:9px;overflow:auto;scrollbar-width:none;margin:14px 0 22px;padding:2px}
+.page:not(#home) .tabs button{flex-shrink:0;border-radius:99px;font-weight:750;padding:11px 15px}
+#buy>.market-crumb,#buy>h1,#buy>p.muted,#ride>h1,#ride>p.muted,#send>h1,#send>p.muted,#account>.market-crumb,#account>h1,#offers>.market-crumb,#b2b>.market-crumb,#cart>h1,#messages>h1,#activity>h1,#activity>p.muted,#profile>h1,#saved>h1,#saved>p.muted,#placeorder>h1{display:none}
+#buy .market-search{border:1px solid #e7eaf3;border-radius:24px;padding:14px;background:white;box-shadow:0 8px 28px #14264c10}
+#buy .market-search input{font-size:16px;min-width:0}
+.v3-shop-departments{margin:20px 0 25px}
+.v3-section-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:0 3px 13px}
+.v3-section-heading h2{font-size:22px;letter-spacing:-.6px;color:#0d1d3b;margin:0}
+.v3-section-heading span{font-size:12px;color:#687891}
+.v3-department-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:11px}
+.v3-department-grid a{min-width:0;text-decoration:none;text-align:center;color:#112141;font-weight:750;font-size:12px;display:flex;flex-direction:column;gap:6px;line-height:1.25}
+.v3-department-grid a img{display:block;width:100%;aspect-ratio:113/84;object-fit:cover;border-radius:17px;box-shadow:0 3px 12px #1d38600b}
+#buy #categoryGrid{margin-top:17px}
+.page:not(#home) .shop-card{border-radius:23px;overflow:hidden}
+#buy #liveProducts{margin-bottom:25px}
+.page:not(#home) .shop-cover{overflow:hidden}
+.page:not(#home) .shop-body{padding:12px 15px}
+#offers .real-banner{border-radius:25px;margin-top:20px}
+#offers .real-grid{gap:18px}
+#offers .real-offer{overflow:hidden;border-radius:26px}
+#offers .real-cover{overflow:hidden}
+#offers .real-cover img{object-fit:cover;min-height:190px}
+#offers .real-body{padding:20px}
+#offers .real-body h3{font-size:24px;letter-spacing:-.5px}
+#ride>.card,#send>.card{max-width:900px;margin-left:auto;margin-right:auto;padding:24px}
+#ride .map{border-radius:21px;min-height:195px}
+#ride .choice{gap:12px}
+#ride .choice label{border-radius:16px;min-height:70px}
+#send .step{font-weight:850;color:#132346;margin-top:20px}
+#send .step span{border-radius:12px}
+#send #fare{font-size:35px!important;font-weight:950}
+.page:not(#home) .note{border-radius:18px;font-size:13px;line-height:1.55}
+#account .account-banner{border-radius:25px}
+#account .auth-grid{gap:15px}
+#account #googleAuth{border-radius:26px;padding:20px}
+#account #sellerProductPanel,#account #managementPanel{margin-top:17px}
+#orders .order-list .card,#notifications .order-list .card{margin:12px 0;padding:22px}
+#orders .order-status{background:#e4f7ee;color:#045e3d;border-radius:25px;font-weight:800;padding:5px 12px}
+#saved>.card,#activity #history .card{padding:27px;max-width:850px;margin:18px auto}
+#profile>.grid{gap:14px}
+#cart #liveCartItems>.card{padding:18px;margin-bottom:12px}
+#messages #messageResult{padding:25px}
+@media(max-width:760px){
+ .v3-department-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .v3-page-stage{min-height:205px}.v3-stage-art{min-height:205px}
+ .v3-stage-copy{padding:22px 2px 22px 20px}
+ .v3-page-stage h1{font-size:clamp(26px,5vw,37px)}
+ .v3-stage-copy p{font-size:12px}
+}
+@media(max-width:520px){
+ .page:not(#home){padding:5px 4px 24px}
+ .v3-page-stage{grid-template-columns:58% 42%;min-height:195px;border-radius:22px;margin:7px 0 17px}
+ .v3-stage-label{padding:6px 9px;font-size:8px}
+ .v3-stage-copy{padding:15px 0 15px 14px}
+ .v3-page-stage h1{font-size:clamp(24px,6.3vw,32px);letter-spacing:-.8px;margin:11px 0 7px}
+ .v3-stage-copy p{font-size:11px;line-height:1.36}
+ .v3-stage-art{min-height:195px;border-radius:0 22px 22px 0}
+ .v3-stage-links{margin-top:11px;gap:6px}
+ .v3-stage-links a{font-size:10px;padding:7px 9px}
+ .v3-department-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+ .v3-department-grid a{font-size:11px}
+ .v3-section-heading h2{font-size:20px}
+ #ride>.card,#send>.card{padding:17px}
+ #offers .real-body{padding:17px}
+ #offers .real-body h3{font-size:21px}
+ .page:not(#home) .section-head h2{font-size:20px}
+}
+
 </style></head><body><header><div class="brand"><img src="/icon.svg" alt="USE ME"><div>USE ME<small>BUY · RIDE · SEND</small></div></div><a class="round" href="/shop" onclick="go('buy');return false" aria-label="Search products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></a><a class="round" href="/messages" onclick="go('messages');return false" aria-label="Messages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg></a><a class="round" href="/cart" onclick="go('cart');return false" aria-label="Shopping cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true"><path d="M3 4h2l2 12h12l3-9H6"/><circle cx="9" cy="20" r="1"/><circle cx="19" cy="20" r="1"/></svg><sup id="cartCount">0</sup></a><a class="round" href="/profile" onclick="go('account');return false" aria-label="My account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></a></header><main class="shell">
 <section id="home" class="page active useme-reference-home ref3-home" aria-label="USE ME home"><a href="/shop" class="ref3-hero" onclick="go('buy');return false" aria-label="USE ME — Everything you need, delivered. Explore shopping"><img src="/assets/useme-reference.svg#hero" alt="USE ME — Everything you need. Delivered. Sri Lankan delivery rider on a motorbike" fetchpriority="high"></a><div class="ref3-services"><a href="/shop" type="button" class="ref3-service" onclick="go('buy');return false" aria-label="Buy Products. Groceries, Food, Fashion & More"><img src="/assets/useme-reference.svg#buy" alt="" loading="eager"><span class="ref3-service-body"><b>Buy Products</b><small>Groceries, Food, Fashion & More</small><i aria-hidden="true">➜</i></span></a><a href="/ride/bike" type="button" class="ref3-service" onclick="goRide('bike');return false" aria-label="Book Bike Ride". Rides opening after safety checks"><img src="/assets/useme-reference.svg#bike" alt="" loading="eager"><span class="ref3-service-body"><b>Book Bike Ride</b><small>Rides opening after safety checks</small><i aria-hidden="true">➜</i></span></a><a href="/ride/threewheeler" type="button" class="ref3-service" onclick="goRide('threewheeler');return false" aria-label="Book Threewheeler". Coming soon · Local Rides"><img src="/assets/useme-reference.svg#tuk" alt="" loading="eager"><span class="ref3-service-body"><b>Book Threewheeler</b><small>Coming soon · Local Rides</small><i aria-hidden="true">➜</i></span></a><a href="/send" type="button" class="ref3-service" onclick="go('send');return false" aria-label="Send Delivery. We Buy & Deliver For You"><img src="/assets/useme-reference.svg#send" alt="" loading="eager"><span class="ref3-service-body"><b>Send Delivery</b><small>We Buy & Deliver For You</small><i aria-hidden="true">➜</i></span></a></div><div class="ref3-heading"><h2>Shop by Category</h2><a href="/shop" onclick="go('buy');return false">See All ❯</a></div><div class="ref3-categories"><a href="/shop?category=Groceries" type="button" aria-label="Groceries & Food" onclick="category('Groceries');return false"><img src="/assets/useme-reference.svg#grocery" alt="" loading="lazy"><span>Groceries & Food</span></a><a href="/shop?category=Fashion" type="button" aria-label="Fashion" onclick="category('Fashion');return false"><img src="/assets/useme-reference.svg#fashion" alt="" loading="lazy"><span>Fashion</span></a><a href="/shop?category=Beauty" type="button" aria-label="Beauty & Personal Care" onclick="category('Beauty');return false"><img src="/assets/useme-reference.svg#beauty" alt="" loading="lazy"><span>Beauty & Personal Care</span></a><a href="/shop?category=Electronics" type="button" aria-label="Electronics & Accessories" onclick="category('Electronics');return false"><img src="/assets/useme-reference.svg#electronics" alt="" loading="lazy"><span>Electronics & Accessories</span></a><a href="/shop?category=Home" type="button" aria-label="Home & Living" onclick="category('Home');return false"><img src="/assets/useme-reference.svg#home" alt="" loading="lazy"><span>Home & Living</span></a><a href="/shop?category=Health" type="button" aria-label="Health & Wellness" onclick="category('Health');return false"><img src="/assets/useme-reference.svg#health" alt="" loading="lazy"><span>Health & Wellness</span></a><a href="/shop?category=Baby" type="button" aria-label="Baby & Kids" onclick="category('Baby');return false"><img src="/assets/useme-reference.svg#baby" alt="" loading="lazy"><span>Baby & Kids</span></a><a href="/shop?category=Books" type="button" aria-label="Books & Stationery" onclick="category('Books');return false"><img src="/assets/useme-reference.svg#books" alt="" loading="lazy"><span>Books & Stationery</span></a><a href="/shop?category=Sports" type="button" aria-label="Sports & Fitness" onclick="category('Sports');return false"><img src="/assets/useme-reference.svg#sports" alt="" loading="lazy"><span>Sports & Fitness</span></a><a href="/shop?category=Pets" type="button" aria-label="Pets" onclick="category('Pets');return false"><img src="/assets/useme-reference.svg#pets" alt="" loading="lazy"><span>Pets</span></a><a href="/shop?category=Automotive" type="button" aria-label="Automotive" onclick="category('Automotive');return false"><img src="/assets/useme-reference.svg#auto" alt="" loading="lazy"><span>Automotive</span></a><a href="/shop" type="button" aria-label="More Categories" onclick="go('buy');return false"><img src="/assets/useme-reference.svg#more" alt="" loading="lazy"><span>More Categories</span></a></div><div class="ref3-promos"><a href="/shop" type="button" onclick="go('buy');return false" aria-label="Daily Essentials — Shop Now"><img src="/assets/useme-reference.svg#essentials" alt="Daily Essentials, Fresh and Quality Products, Shop Now" loading="lazy"></a><a href="/offers" type="button" onclick="go('offers');return false" aria-label="Special Offers — Shop Now"><img src="/assets/useme-reference.svg#specials" alt="Special Offers, Best Deals for You, Shop Now" loading="lazy"></a><a href="/send" type="button" onclick="go('send');return false" aria-label="Fast Delivery — Order Now"><img src="/assets/useme-reference.svg#fast" alt="Fast Delivery, From Shops To Your Home, Order Now" loading="lazy"></a></div></section>
 <section id="account" class="page"><div class="v3-page-stage v3-stage-profile"><div class="v3-stage-copy"><span class="v3-stage-label">✦ WELCOME TO USE ME</span><h1>My Account</h1><p>Secure sign-in, orders and your shop.</p><div class="v3-stage-links"><a href="/orders" onclick="go('orders');return false">Orders ↗</a><a href="/notifications" onclick="go('notifications');return false">Notifications ↗</a></div></div><img class="v3-stage-art" src="/assets/useme-reference.svg#fashion" loading="eager" alt="USE ME WELCOME TO USE ME"></div><div class="market-crumb">USE ME / Secure Account</div><h1>🔐 USE ME Account</h1><div class="account-banner"><h2>Order online. Track everything.</h2><p>Orders are stored in the USE ME database after successful authenticated submission. WhatsApp is for help only.</p></div><p id="authStatus" class="auth-status" role="status">Checking account...</p><div id="googleAuth" class="card" style="margin:14px 0;text-align:center"><h2>Easy Email Sign In</h2><p>Enter your Gmail address. We will send a secure login link — no password required.</p><label class="field" style="text-align:left;max-width:440px;margin:auto">Email<input id="magicEmail" type="email" autocomplete="email" placeholder="yourname@gmail.com"></label><button class="btn dark" id="magicButton" onclick="usemeMagicLink()" style="width:100%;max-width:440px;margin-top:12px">✉ Send Login Link</button><p id="googleAuthStatus" role="status" aria-live="polite" style="overflow-wrap:anywhere"></p><details style="margin-top:12px"><summary>Google one-tap sign-in</summary><p>Google account chooser requires Google OAuth to be enabled in the USE ME Supabase project. It is not yet available.</p></details></div><div class="auth-grid" id="authForms"><div class="card"><h2>Sign in</h2><div class="form"><label class="field">Email<input type="email" id="loginEmail" autocomplete="email"></label><label class="field">Password<input type="password" id="loginPassword" autocomplete="current-password"></label><button class="btn" onclick="usemeSignIn()">Sign in</button></div></div><div class="card"><h2>Create account</h2><div class="form"><label class="field">Name<input id="registerName" autocomplete="name"></label><label class="field">Email<input type="email" id="registerEmail" autocomplete="email"></label><label class="field">Password (at least 8 characters)<input type="password" id="registerPassword" autocomplete="new-password"></label><button id="registerButton" class="btn dark" onclick="usemeSignUp()">Register</button><p id="registerResult" role="status" aria-live="polite" style="font-weight:700;overflow-wrap:anywhere"></p><button class="btn soft" onclick="resendUsemeConfirmation()">Resend verification email</button></div></div></div><button id="signoutButton" class="btn soft hidden" onclick="usemeSignOut()">Sign out</button><div class="card" id="shopApplyCard" style="margin:15px 0"><h2>🏪 Register your shop</h2><p>Apply to sell on USE ME. Applications require approval before products can go live.</p><label class="field">Shop name<input id="shopApplyName" maxlength="100" placeholder="Your registered shop name"></label><button class="btn dark" onclick="applyUsemeShop()">Submit shop application</button><p id="shopApplyStatus" role="status"></p><div id="myShopApplications"></div></div><div id="sellerProductPanel" class="card hidden"><h2>📦 Product management</h2><p>Only approved shop owners can add listings.</p><label class="field">Approved shop<select id="sellerProductShop"></select></label><label class="field">Product name<input id="sellerProductName" maxlength="120" placeholder="Product name"></label><label class="field">Price (LKR)<input id="sellerProductPrice" type="number" min="1" step="0.01"></label><label class="field">Stock quantity<input id="sellerProductStock" type="number" min="0" step="1" value="1"></label><button class="btn dark" onclick="addSellerProduct()">Save product</button><p id="sellerProductStatus" role="status"></p><div id="sellerProductList"></div></div><div id="managementPanel" class="card hidden"><h2>🏬 Order Management</h2><div class="card" style="margin:12px 0"><h3>Order overview</h3><p id="ownerSummary">Loading order statistics...</p><small>Delivery fee estimates are not confirmed revenue.</small></div><p id="managementRoleNote">Only verified USE ME owners and shop managers can manage assigned orders.</p><div id="shopApprovalPanel" class="hidden"><div class="section-head"><h3>🏪 Shop approvals</h3><button class="btn soft" onclick="loadShopApprovals()">Refresh</button></div><div id="shopApprovalList"></div></div><div class="section-head"><h3>Incoming Orders</h3><button class="btn soft" onclick="loadManagedOrders()">Refresh</button></div><div class="order-list" id="managedOrders"></div></div></section>
