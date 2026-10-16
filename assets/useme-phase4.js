@@ -344,12 +344,18 @@ window.loadNotifications=async function(){
   const buttons=el('div','v4-notice-buttons');
   if(n.order_id){
    const open=el('button','btn soft','View order →');
-   open.onclick=()=>{
-    const url='/orders?order='+encodeURIComponent(n.order_id);
-    go('orders',{url});
-    window.loadMyOrders().then(()=>setTimeout(()=>{
+   open.onclick=async()=>{
+    const role=await db().rpc('my_useme_role');
+    const canManage=!role.error&&['owner','seller'].includes(role.data);
+    if(canManage){
+     go('seller',{url:'/seller?order='+encodeURIComponent(n.order_id)});
+     await window.loadManagedOrders();
+     $('usemeManaged_'+n.order_id)?.scrollIntoView({behavior:'smooth',block:'center'});
+    }else{
+     go('orders',{url:'/orders?order='+encodeURIComponent(n.order_id)});
+     await window.loadMyOrders();
      $('usemeOrder_'+n.order_id)?.scrollIntoView({behavior:'smooth',block:'center'});
-    },0));
+    }
    };
    buttons.append(open);
   }
@@ -410,12 +416,22 @@ async function connectLiveNoticeChannel(user){
 }
 const initialLoad=async()=>{
  initUi();
+ if(location.pathname==='/order/new'){
+  const requested=new URLSearchParams(location.search).get('service');
+  const service=$('serviceOrderType');
+  if(service&&requested&&Array.from(service.options).some(x=>x.value===requested))service.value=requested;
+ }
  const user=await currentUsemeUser();
  await connectLiveNoticeChannel(user);
  if(visible('orders'))await window.loadMyOrders();
  if(visible('notifications'))await window.loadNotifications();
  if(visible('seller'))await window.loadManagedOrders();
 };
+// Replace the old timer's captured callback with the Phase 4 refresh routine.
+if(typeof usemeNotificationTimer!=='undefined'){
+ if(usemeNotificationTimer)clearInterval(usemeNotificationTimer);
+ usemeNotificationTimer=setInterval(window.usemeBackgroundRefresh,30000);
+}
 if(db()){
  db().auth.onAuthStateChange((_event,session)=>{
   setTimeout(async()=>{
