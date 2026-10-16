@@ -39,6 +39,18 @@ for insert to authenticated with check (
    and (s.owner_id=auth.uid() or public.is_owner())
  )
 );
+-- Storage image management needs scoped SELECT as well as DELETE for photo replacement.
+drop policy if exists "useme approved sellers inspect product photos" on storage.objects;
+create policy "useme approved sellers inspect product photos" on storage.objects
+for select to authenticated using (
+ bucket_id='product-images' and exists (
+ select 1 from public.shops s
+ where s.id::text=(storage.foldername(name))[1]
+   and s.status='approved'
+   and (s.owner_id=auth.uid() or public.is_owner())
+ )
+);
+
 drop policy if exists "useme approved sellers remove product photos" on storage.objects;
 create policy "useme approved sellers remove product photos" on storage.objects
 for delete to authenticated using (
