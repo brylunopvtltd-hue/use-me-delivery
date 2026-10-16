@@ -94,3 +94,51 @@
 #seller .v4-shop-row .v4-shop-pickup-summary{font-size:12px;line-height:1.55;color:#36546e;margin-top:7px}
 #seller .v4-shop-row .v4-pickup-missing{color:#aa5c18;font-weight:850}
 @media(max-width:600px){#seller #shopPickupPanel{padding:15px}#seller .v4-pickup-box{padding:13px}#seller .v4-owner-whatsapp-tools .btn{font-size:11px}}
+
+
+/* USE ME V3 GPS — voluntary one-time location sharing, scoped to forms and owner route maps. */
+.useme-gps-box{margin:15px 0 17px;padding:16px;border:1px solid #d6e9ec;border-radius:18px;background:linear-gradient(122deg,#eaf8ff,#f0fff3)}
+.useme-gps-box strong{display:block;color:#0c3d56;font-size:15px;font-weight:900}
+.useme-gps-box p{font-size:12px;line-height:1.55;color:#49677c;margin:9px 0 12px}
+.useme-gps-box .useme-gps-buttons{display:flex;flex-wrap:wrap;gap:8px}
+.useme-gps-box .useme-gps-buttons button{border:1px solid #cde3e7;background:#fff;color:#134c66;min-height:39px;border-radius:12px;font-weight:850;font-size:12px;padding:9px 12px;white-space:normal}
+.useme-gps-box .useme-gps-buttons button:first-child{background:#137a8d;color:#fff;border-color:#137a8d}
+.useme-gps-box .useme-gps-buttons button:disabled{opacity:.4;cursor:not-allowed}
+.useme-gps-box .useme-gps-status{margin:12px 0 0;color:#146c50;font-weight:750;font-size:12px;overflow-wrap:anywhere}
+.useme-saved-gps-status{font-size:12px;color:#06724d;line-height:1.5;font-weight:750}
+#orders .v4-customer-location{background:#eefaef;border:1px solid #d4eadd;border-radius:17px;padding:14px 16px;margin:14px 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap}
+#orders .v4-customer-location strong{flex:1 1 100%;color:#145844;font-weight:900}
+#orders .v4-customer-location p{flex:1 1 100%;color:#396958;font-size:12px;line-height:1.5;margin:0}
+#orders .v4-customer-location button{font-size:12px;min-height:36px;padding:9px 12px;border-radius:12px}
+#seller .v4-gps-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+#seller .v4-gps-status small{background:#ebf4ff;color:#16466a;padding:7px 10px;border-radius:13px;font-weight:750;font-size:12px}
+#seller .v4-gps-status button{border-radius:13px;min-height:39px}
+body.useme-map-open{overflow:hidden}
+.useme-map-overlay{position:fixed;inset:0;z-index:99999;background:#061429d6;display:flex;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(5px)}
+.useme-map-dialog{width:min(100%,970px);max-height:calc(100dvh - 28px);background:#fff;border-radius:23px;box-shadow:0 18px 60px #050d24bd;display:flex;flex-direction:column;overflow:hidden}
+.useme-map-dialog-top{padding:14px 17px;display:flex;gap:12px;align-items:center;justify-content:space-between;background:#071c3d;color:#fff}
+.useme-map-dialog-title{font-size:clamp(14px,2vw,19px);font-weight:950;line-height:1.3;color:#fff}
+.useme-map-close{padding:9px 12px;border-radius:11px;background:#fff;color:#12334d;font-weight:900;font-size:13px;white-space:nowrap}
+.useme-map-main{padding:12px 13px 17px;overflow-y:auto;scrollbar-width:thin}
+.useme-map-canvas{width:100%;height:clamp(270px,47vh,490px);min-height:270px;background:#e8f3f7;border-radius:16px;overflow:hidden;position:relative;z-index:0}
+.useme-map-canvas.useme-map-no-coords{display:grid;place-items:center;padding:24px;text-align:center;font-weight:800;font-size:14px;color:#355f71;line-height:1.7}
+.useme-map-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.useme-map-button{background:#f4f8fe;color:#093f65;border:1px solid #d7e5f3;padding:11px 12px;font-size:12px;font-weight:900;border-radius:12px;min-height:43px;line-height:1.4}
+.useme-map-button:first-of-type{background:#ffc421;border-color:#ffc421;color:#13213a}
+.useme-map-button:disabled{opacity:.5}
+.useme-map-details{flex:1 1 100%;background:#f3f8ff;border-radius:12px;padding:12px 14px;font-size:12px;color:#3a5873;line-height:1.6;overflow-wrap:anywhere}
+.useme-map-status{font-size:11px;line-height:1.5;color:#6b7e95;margin:12px 0 0}
+.useme-map-pin{background:transparent;border:0!important}
+.useme-map-pin span{display:grid;place-items:center;width:36px;height:36px;border:3px solid #fff;border-radius:50% 50% 50% 5%;transform:rotate(-45deg);color:#fff;font-size:17px;box-shadow:0 3px 14px #0d254f50}
+@media(max-width:560px){
+ .useme-gps-box{padding:13px;margin:12px 0}
+ .useme-gps-box .useme-gps-buttons{gap:7px}
+ .useme-gps-box .useme-gps-buttons button{font-size:11px;flex:1 1 auto}
+ .useme-map-overlay{padding:7px}
+ .useme-map-dialog{max-height:calc(100dvh - 14px);border-radius:16px}
+ .useme-map-main{padding:8px 8px 13px}
+ .useme-map-canvas{height:45vh;min-height:240px}
+ .useme-map-actions{gap:7px}
+ .useme-map-button{padding:9px 10px;font-size:11px}
+ .useme-map-dialog-top{padding:11px}
+}
