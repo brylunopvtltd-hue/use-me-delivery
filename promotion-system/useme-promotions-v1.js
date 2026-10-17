@@ -234,8 +234,8 @@ function quickView(id){
  const close=$('usemeQuickClose');close?.focus();
 }
 function popup(){
- const items=promos.filter(p=>p.kind==='popup'&&live(p)&&p.slots?.some(s=>['home','shop'].includes(s)));
- if(!items.length||!($('home')?.classList.contains('active')||$('buy')?.classList.contains('active')))return;
+ const items=promos.filter(p=>p.kind==='popup'&&live(p)&&p.slots?.some(s=>['home','shop','offers'].includes(s)));
+ if(!items.length||!($('home')?.classList.contains('active')||$('buy')?.classList.contains('active')||$('offers')?.classList.contains('active')))return;
  const c=items[0];const flag='useme-campaign-seen-'+c.id;
  try{if(sessionStorage.getItem(flag))return;sessionStorage.setItem(flag,'yes')}catch(e){}
  if(popupTimer)clearTimeout(popupTimer);
@@ -248,11 +248,11 @@ function popup(){
 }
 function renderAll(){
  clearTimers();
- renderCarousel('usemePromoHomeCarousel','home');renderCarousel('usemePromoShopCarousel','shop');
- renderTicker('usemePromoHomeTicker','home');renderTicker('usemePromoShopTicker','shop');
+ renderCarousel('usemePromoHomeCarousel','home');renderCarousel('usemePromoShopCarousel','shop');renderCarousel('usemePromoOffersCarousel','offers');
+ renderTicker('usemePromoHomeTicker','home');renderTicker('usemePromoShopTicker','shop');renderTicker('usemePromoOffersTicker','offers');
  renderTrust();renderShortcuts();
  renderFlash('usemePromoHomeFlash','home');renderFlash('usemePromoShopFlash','shop');renderFlash('usemePromoOffersFlash','offers');
- renderCollections('usemePromoHomeCollections','home');renderCollections('usemePromoShopCollections','shop');
+ renderCollections('usemePromoHomeCollections','home');renderCollections('usemePromoShopCollections','shop');renderCollections('usemePromoOffersCollections','offers');
  renderCoupons('usemePromoHomeCoupons','home');renderCoupons('usemePromoShopCoupons','shop');renderCoupons('usemePromoOffersCoupons','offers');
  renderTrending();productBadges();popup();
 }
