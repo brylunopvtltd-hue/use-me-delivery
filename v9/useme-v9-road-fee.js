@@ -13,7 +13,7 @@ const uuid=x=>/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(String(x||''))
 const ok=p=>p&&Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lng))&&Math.abs(Number(p.lat))<=90&&Math.abs(Number(p.lng))<=180;
 const GPS_NOTICE='After you permit location, your selected GPS pin is securely submitted for road-distance pricing. USE ME never shares the Owner’s private position with you. Road-routing service receives route locations. Actual quotation needs Owner approval.';
 const state={service:{pin:null,last:null},cart:{pin:null,last:null},map:{pin:null,last:null}};
-let watch=null,watchScope=null,lastRequote=0,ownerWatch=null,lastOwnerSync=0,ownerActive=false;
+let watch=null,watchScope=null,lastRequote=0,ownerWatch=null,ownerRefreshTimer=null,lastOwnerSync=0,ownerActive=false;
 let quoteBusy=false,ownerSyncBusy=false,navLocation=null;
 function boxText(scope,t){flag('usemeRoadStatus_'+scope,t)}
 async function currentUser(){
@@ -147,6 +147,20 @@ async function quoteOwnerStart(){
  if(!navigator.geolocation||!window.isSecureContext)return flag('usemeOwnerRateStatus','GPS unavailable. Use HTTPS with location permission.');
  ownerActive=true;
  flag('usemeOwnerRateStatus','🟢 Owner GPS capture starting. Only a private rate origin will be uploaded; not public tracking.');
+ // GPS watch callbacks may pause when Owner stands still. Explicitly refresh while this page remains open.
+ ownerRefreshTimer=setInterval(async()=>{
+  if(!ownerActive||document.hidden||ownerSyncBusy||Date.now()-lastOwnerSync<85000)return;
+  ownerSyncBusy=true;
+  try{
+   const gps=await getGPS();
+   if(!ownerActive||document.hidden)return;
+   const result=await d.rpc('useme_v9_owner_rate_location',{p_lat:gps.lat,p_lng:gps.lng,p_accuracy_m:Math.round(gps.accuracy||0)});
+   if(result.error)throw result.error;
+   lastOwnerSync=Date.now();
+   flag('usemeOwnerRateStatus','● Owner pricing GPS ACTIVE · refreshed '+new Date().toLocaleTimeString()+' · ±'+Math.round(gps.accuracy)+'m · visible only to private server.');
+  }catch(e){flag('usemeOwnerRateStatus','Owner pricing GPS refresh delayed: '+limit(e.message||'GPS unavailable')+'. Customer may need a manual quote.')}
+  finally{ownerSyncBusy=false}
+ },45000);
  ownerWatch=navigator.geolocation.watchPosition(async raw=>{
   if(!ownerActive||ownerSyncBusy||Date.now()-lastOwnerSync<45000)return;
   ownerSyncBusy=true;
@@ -163,6 +177,7 @@ async function quoteOwnerStart(){
 }
 async function stopOwnerOrigin(){
  ownerActive=false;
+ if(ownerRefreshTimer!==null){clearInterval(ownerRefreshTimer);ownerRefreshTimer=null}
  if(ownerWatch!==null&&navigator.geolocation){navigator.geolocation.clearWatch(ownerWatch);ownerWatch=null}
  const b=$('usemeOwnerRateStart');if(b)b.disabled=false;
  const stop=$('usemeOwnerRateStop');if(stop)stop.disabled=true;
