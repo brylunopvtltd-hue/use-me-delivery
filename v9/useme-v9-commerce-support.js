@@ -249,12 +249,36 @@ async function sendTicketReply(e){
  safeStatus('v9HelpStatus',r.error?'Message not sent: '+r.error.message:'✓ Message saved on this private support case.');
  if(!r.error){$('v9HelpReply').value='';openTicket(activeTicket)}
 }
+async function loadOwnerReviews(){
+ const root=$('v9OwnerReviewQueue');if(!root)return;
+ root.replaceChildren();
+ if(!await owner()){root.append(elem('p','v9c-muted','Owner login required.'));return}
+ const r=await db().from('useme_v9_verified_reviews').select('id,product_id,rating,review_text,created_at').eq('approved',false).order('created_at',{ascending:false}).limit(75);
+ if(r.error){root.textContent='Review moderation unavailable: '+r.error.message;return}
+ if(!r.data?.length){root.append(elem('p','v9c-muted','No pending verified product reviews.'));return}
+ const ids=[...new Set(r.data.map(x=>x.product_id))];
+ const items=await db().from('products').select('id,name').in('id',ids).limit(100);
+ const names=new Map((items.data||[]).map(x=>[x.id,x.name]));
+ r.data.forEach(x=>{
+  const panel=elem('article','v9c-owner-ticket');
+  panel.append(elem('b','','★'.repeat(x.rating)+'☆'.repeat(5-x.rating)+' · '+(names.get(x.product_id)||'Product')),
+   elem('p','',x.review_text),elem('small','','Submitted '+new Date(x.created_at).toLocaleString()));
+  panel.append(button('✓ Approve authentic review',async()=>{
+   if(!confirm('Approve this verified delivered-order review for public display?'))return;
+   const result=await db().from('useme_v9_verified_reviews').update({approved:true}).eq('id',x.id);
+   safeStatus('v9OwnerSupportStatus',result.error?'Could not approve review: '+result.error.message:'✓ Verified review approved for public display.');
+   if(!result.error)loadOwnerReviews();
+  },'v9c-buy'));
+  root.append(panel);
+ });
+}
 async function loadOwnerSupport(){
  const root=$('v9OwnerSupportList');if(!root)return;root.replaceChildren();
  if(!await owner()){safeStatus('v9OwnerSupportStatus','Verified Owner account required.');return}
  const r=await db().from('useme_v9_support_tickets').select('id,title,description,category,state,owner_note,customer_id,created_at').order('created_at',{ascending:false}).limit(100);
  if(r.error){safeStatus('v9OwnerSupportStatus','Support tickets unavailable: '+r.error.message);return}
  safeStatus('v9OwnerSupportStatus',r.data.length+' recent private support requests. Customers cannot see other users’ tickets.');
+ loadOwnerReviews();
  r.data.forEach(t=>{
   const div=elem('article','v9c-owner-ticket');
   div.append(elem('h3','',t.title),elem('p','',t.description),elem('small','',t.category+' · '+new Date(t.created_at).toLocaleString()));
@@ -280,6 +304,7 @@ function attach(){
  $('v9HelpForm')?.addEventListener('submit',newTicket);$('v9HelpReplyForm')?.addEventListener('submit',sendTicketReply);
  $('v9HelpTicketsRefresh')?.addEventListener('click',loadSupportTickets);
  $('v9OwnerSupportRefresh')?.addEventListener('click',loadOwnerSupport);
+ $('v9OwnerReviewRefresh')?.addEventListener('click',loadOwnerReviews);
  const pages=[['searchV9',openSearch],['productDetails',renderProduct],['shopDetails',renderShop],['help',helpInit],['ownerSupport',loadOwnerSupport]];
  pages.forEach(([id,fn])=>{
   const el=$(id);if(!el)return;
