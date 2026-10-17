@@ -52,6 +52,10 @@ function inform(msg){
  if(!chooser||chooser.hidden)text('usemeLocGlobalStatus',msg);
 }
 function notifyCurrent(){
+ if(!active){
+  // Do not leak the previous account's delivery/shop draft into a later checkout.
+  for(const scope of ['service','cart','pickup','register'])window.usemeForgetDraftLocation?.(scope);
+ }
  window.dispatchEvent(new CustomEvent('useme:preferred-location-changed',{detail:{location:active?{...active}:null}}));
  if(active&&$('map')?.classList.contains('active'))window.usemeV9Maps?.showSaved?.(active);
  applyToPage(true);
