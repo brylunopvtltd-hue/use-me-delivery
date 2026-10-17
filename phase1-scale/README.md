@@ -1,33 +1,32 @@
-# USE ME — Free Product Scaling Phase 1 (Preview)
+# USE ME — Free Product Scaling Phase 1 (staging)
 
-This branch records the two client-side assets uploaded to the separate Cloudflare Worker `useme-scale-phase1-preview`. It does **not** change the live Worker `use-me-superapp-web`.
+The source snapshots here match the Cloudflare Worker `useme-scale-phase1-preview`, a separate staging Worker. **Live production `use-me-superapp-web` remains unchanged.**
 
 ## Changes staged
-- Seller product list now queries the **selected shop** with Supabase `.range(...)`, fetching 40 at a time and providing a Load More control. Previous code loaded only the first 120 products across all shops.
-- Approved shop product-detail pages now paginate active products, 40 per request, rather than displaying at most 120.
-- Marketplace product grid now fetches 40 product rows per page, with a Load More control. Original code stopped at the first 120 products.
-- Product photo upload now attempts client-side WebP conversion/resize (maximum dimension 1600 pixels, quality 0.80), uploading the smaller image if optimization succeeds, otherwise preserving the existing JPEG/PNG/WebP upload path.
 
-## Scope & safeguards
-- All product and order records remain in the existing Supabase project.
-- No existing records were deleted or altered.
-- No R2 bucket or paid subscription was created.
-- The main production Worker was **not modified**.
-- Existing owner-only order management and seller product permissions were not changed.
-- This draft is for review; the files are copies of staged Worker assets and are **not automatically wired to deploy** through this GitHub repo.
+- Seller Dashboard now loads products for the selected shop **40 per request**, with a "Load more products" button, instead of a global 120-product limit.
+- Public approved Shop pages now fetch the selected shop's published products **40 per request**, also with "Load more products".
+- Main Marketplace listing now supports **40-product server-side pagination**, with category and price ordering applied by the database, instead of stopping at 120.
+- V9 advanced Search no longer fetches a fixed 400-product catalogue. It uses server-side **name, description, category and approved-shop-name text filters**, maximum price and sort, and paginated result loading. Search results count is requested from the database.
+- Product photo uploads try WebP resize/compression in the browser (max 1600px, WebP quality 0.80); if optimization cannot produce a smaller valid photo, upload falls back to the original JPEG, PNG or WebP subject to the existing 12 MB validation.
 
-## Required verification before production
-1. Run `node --check` on both JavaScript assets in a local Node environment.
-2. Manually test a seller with 300+ products; confirm navigating between shops while a page is loading.
-3. Manually test an approved public shop page with 300+ products, including page boundaries.
-4. Manually test marketplace filters, search, price sorting and Add to Cart with 300+ products.
-5. Test JPEG/PNG/WebP uploads on Android browsers, transparent PNG files, and the 12 MB validation cap.
-6. Verify owner dashboard, checkout, orders, stock, and permissions.
-7. Improve the separate V9 catalog search (currently capped at 400 products) before declaring large-catalog readiness.
-8. Review Supabase usage/billing thresholds; no free plan can guarantee unlimited traffic.
+## Code verification
 
-## Known limitations
-- This is a **staged code-level implementation**, not a proven 10,000-product load test.
-- The V9 search catalog still has a 400-item fetch cap.
-- Shop selector and approval listing remain subject to their own query caps.
-- Automatic resizing is best-effort and may fall back to the original photo.
+GitHub Actions workflow `.github/workflows/useme-scale-check.yml` ran successfully in run [39081000573](https://github.com/brylunopvtltd-hue/use-me-delivery/actions/runs/39081000573), covering `node --check` on both JS assets and basic staged-feature assertions. This is **syntax and basic source checking**, not user acceptance, browser QA or proof of 10,000-product capacity.
+
+## Important limitations before production
+
+- Shop enumeration in V9 Search currently uses only the first **180 approved shops**. Search by shop name additionally evaluates up to 60 matching shop IDs.
+- Search category options start with common named categories and expand from loaded pages; this is **not a complete dynamic category facet** for large catalogues.
+- Load More queries use offset paging, so changes during browsing may alter page boundaries.
+- Server-side price sorting works for the staged Search and Marketplace, but needs browser regression testing.
+- The previously existing per-item 12 MB source-photo limit and the project's real monthly storage/bandwidth quotas remain.
+- Automatic WebP creation depends on browser support; fallbacks retain original file sizes.
+- The GitHub files are staged copies; GitHub merging alone does **not** deploy to Cloudflare.
+- Test against a seeded staging dataset of 300, 1,000 and 5,000 products and multiple sellers before a live release.
+- Verify mobile image upload, search, cart, checkout, permission boundaries and owner-managed orders before release.
+- No R2 setup, paid plan, database records changes, or production deployment were performed in Phase 1.
+
+## Rollout safety
+
+Do not merge or deploy without sign-off after browser and data-load QA. Preserve an exact backup of the production Worker before replacing it.
