@@ -35,6 +35,8 @@ function render(){
  if(badge)badge.textContent=active?'✓ Saved location':'GPS permission optional';
  text('usemeLocCurrent',active?locationDisplay(active)+' · '+active.lat.toFixed(5)+', '+active.lng.toFixed(5)+' · '+(active.source==='gps'?'GPS':'Selected map pin'):'Not selected. Choose once, then reuse on all USE ME pages.');
  const clear=$('usemeLocClear');if(clear)clear.disabled=!active;
+ const ownerArea=$('usemeLocOwnerArea');if(ownerArea)ownerArea.hidden=!isOwner;
+ const titleOwner=$('usemeLocOwnerTitle');if(titleOwner)titleOwner.hidden=!isOwner;
  const baseButton=$('usemeLocSetOwnerBase');if(baseButton)baseButton.hidden=!isOwner;
  const clearBase=$('usemeLocRemoveOwnerBase');if(clearBase)clearBase.hidden=!isOwner;
  const baseNote=$('usemeLocOwnerBaseStatus');if(baseNote&&isOwner)baseNote.textContent=ownerBase?'✓ Owner dispatch base saved. It stays fixed until you change or remove it. This is NOT your live GPS.':'No owner dispatch base saved. Select your USE ME dispatch base once for automatic road quotes.';
@@ -268,7 +270,7 @@ function makeChooser(){
  const panel=node('section','useme-loc-dialog');
  const top=node('div','useme-loc-dialog-top');
  const heading=node('h2','','📍 USE ME — My Location');heading.id='usemeLocTitle';
- const close=btn('✕','', 'useme-loc-close');
+ const close=btn('✕',closeChooser,'useme-loc-close');
  close.id='usemeLocClose';close.onclick=closeChooser;top.append(heading,close);
  const current=node('p','useme-loc-current');current.id='usemeLocCurrent';
  const explanation=node('p','useme-loc-hint','Select once. Home, Shop, Cart, Delivery, Orders and Maps will reuse this pin until you change it. No automatic live GPS tracking.');
@@ -299,8 +301,8 @@ function makeChooser(){
  mp.append(coordInputs,useCoord,candidate,confirm);
  const places=node('div','useme-loc-saved-places');places.id='usemeLocSavedPlaces';
  const placesTitle=node('h3','','My Saved Places');
- const ownerTitle=node('h3','','🔒 Owner Dispatch Base (fixed, not live)');
- const ownerArea=node('div','useme-loc-owner');
+ const ownerTitle=node('h3','','🔒 Owner Dispatch Base (fixed, not live)');ownerTitle.id='usemeLocOwnerTitle';
+ const ownerArea=node('div','useme-loc-owner');ownerArea.id='usemeLocOwnerArea';
  const baseStatus=node('p','useme-loc-hint');baseStatus.id='usemeLocOwnerBaseStatus';
  const setBase=btn('Use my saved location as dispatch base',saveOwnerBase,'useme-loc-primary');setBase.id='usemeLocSetOwnerBase';setBase.hidden=true;
  const clearBase=btn('Remove dispatch base',removeOwnerBase,'useme-loc-muted');clearBase.id='usemeLocRemoveOwnerBase';clearBase.hidden=true;
