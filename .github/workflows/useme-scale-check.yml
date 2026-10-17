@@ -1,0 +1,44 @@
+name: USE ME product-scaling syntax check
+on:
+  push:
+    branches:
+      - feature/free-product-scale-phase1
+    paths:
+      - "phase1-scale/**"
+      - ".github/workflows/useme-scale-check.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "phase1-scale/**"
+      - ".github/workflows/useme-scale-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-javascript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate staged JavaScript syntax
+        run: |
+          node --check phase1-scale/useme-core-perf1.js
+          node --check phase1-scale/useme-v9-commerce-support.js
+      - name: Verify staged pagination and photo optimization features
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const core=fs.readFileSync('phase1-scale/useme-core-perf1.js','utf8');
+          const commerce=fs.readFileSync('phase1-scale/useme-v9-commerce-support.js','utf8');
+          assert(core.includes('optimizeSellerPhoto'), 'Photo optimization missing');
+          assert(core.includes('Load more products'), 'Product pagination missing');
+          assert(commerce.includes('usemeSearchGeneration'), 'Search request cancellation missing');
+          assert(commerce.includes('range(offset,offset+pageSize-1)'), 'Search pagination missing');
+          assert(!commerce.includes('.limit(400)'), 'Old search 400-item cap remains');
+          console.log('USE ME Phase 1 code checks passed');
+          NODE
