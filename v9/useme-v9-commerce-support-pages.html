@@ -1,0 +1,84 @@
+
+<section id="searchV9" class="page" aria-label="Search USE ME marketplace">
+ <div class="v9c-hero"><small>✦ USE ME PRODUCT DISCOVERY</small><h1>🔎 Search & Compare</h1><p>Search actual published products, compare real prices and stock, or speak a query on compatible devices.</p></div>
+ <div class="v9c-panel">
+  <form id="v9SearchForm" class="v9c-form" role="search">
+   <div class="v9c-search-fields">
+    <label>Product, shop or category<input id="v9SearchInput" type="search" maxlength="180" placeholder="Search actual local products..." autocomplete="off"></label>
+    <label>Category<select id="v9SearchCategory"><option value="All">All categories</option></select></label>
+    <label>Maximum price LKR<input id="v9SearchMaxPrice" type="number" step="1" min="0" placeholder="No limit"></label>
+    <label>Sort<select id="v9SearchSort"><option value="popular">Available first</option><option value="low">Price: low first</option><option value="high">Price: high first</option></select></label>
+   </div>
+   <div class="v9c-row">
+    <button class="v9c-btn" type="submit">🔎 Search Products</button>
+    <button id="v9VoiceSearch" type="button" class="v9c-soft">🎙️ Voice Search</button>
+    <label style="max-width:120px">Voice language<select id="v9VoiceLang"><option value="ta-LK">Tamil</option><option value="si-LK">Sinhala</option><option value="en-LK">English</option></select></label>
+    <button id="v9CompareButton" type="button" class="v9c-soft">⇄ Compare Selected</button>
+    <small id="v9CompareCount">0 selected for comparison</small>
+   </div>
+  </form>
+  <p class="v9c-feature-note">Only published products from approved USE ME shops appear. Voice recognition needs microphone permission and a compatible browser. Image recognition and generative AI search are not enabled yet.</p>
+  <p id="v9SearchStatus" class="v9c-muted" role="status">Loading verified products…</p>
+  <div id="v9SearchResults"></div>
+  <div id="v9CompareTable" aria-live="polite"></div>
+ </div>
+</section>
+
+<section id="productDetails" class="page" aria-label="Individual product details">
+ <div class="v9c-hero"><small>✦ VERIFIED LOCAL MARKETPLACE</small><h1>🛍️ Product Details</h1><p>Shareable, dedicated product URL with actual price, available stock, shop information and verified customer reviews.</p></div>
+ <div class="v9c-panel">
+  <div id="v9ProductDetail" class="v9c-detail-grid" role="region" aria-label="Product details"><p class="v9c-muted">Loading verified product…</p></div>
+ </div>
+ <div class="v9c-panel"><h2>★ Verified Customer Reviews</h2><p class="v9c-muted">Only actual delivered-order reviews approved by USE ME Owner are public. Unverified ratings are not shown.</p><div id="v9ProductReviews"></div></div>
+ <div class="v9c-panel"><h2>✍️ Review a Delivered Product</h2><p class="v9c-muted">Only customers who received this exact product in a delivered order can submit a review. Owner moderation is required.</p>
+  <form id="v9ProductReviewForm" class="v9c-form">
+   <label>My delivered product order<select id="v9ProductReviewOrder" required><option>Sign in to view eligible orders</option></select></label>
+   <label>Rating<select id="v9ReviewRating" required><option value="5">★★★★★ 5</option><option value="4">★★★★☆ 4</option><option value="3">★★★☆☆ 3</option><option value="2">★★☆☆☆ 2</option><option value="1">★☆☆☆☆ 1</option></select></label>
+   <label>Your genuine experience<textarea id="v9ReviewText" maxlength="800" minlength="10" required placeholder="Describe the product you actually received (at least 10 characters)"></textarea></label>
+   <button type="submit" class="v9c-buy">Submit Verified Review</button>
+  </form><p id="v9ReviewStatus" class="v9c-muted" role="status"></p>
+ </div>
+</section>
+
+<section id="shopDetails" class="page" aria-label="Individual approved merchant shop">
+ <div class="v9c-hero"><small>✦ USE ME VERIFIED SHOPS</small><h1>🏪 Local Shop Profile</h1><p>Browse a single approved shop and its real product catalogue. Shop owners post products; USE ME Owner manages all customer purchases and deliveries.</p></div>
+ <div class="v9c-panel"><div id="v9ShopDetails"><p class="v9c-muted">Loading approved shop…</p></div></div>
+</section>
+
+<section id="help" class="page" aria-label="Private USE ME customer support">
+ <div class="v9c-hero"><small>✦ USE ME CUSTOMER CARE</small><h1>💬 Help & Support</h1><p>Report delivery problems, request a return/refund review, or discuss an order with USE ME Owner. Private support tickets stay linked to your account.</p></div>
+ <div class="v9c-panel"><h2>Create a Private Support Ticket</h2>
+  <form id="v9HelpForm" class="v9c-form">
+   <div class="v9c-form-cols">
+    <label>Issue type<select id="v9HelpCategory" required><option value="order">Order question</option><option value="delivery">Delivery issue</option><option value="product">Product problem</option><option value="refund">Refund / return review</option><option value="payment">Payment enquiry</option><option value="account">Account support</option><option value="other">Other</option></select></label>
+    <label>Related order (optional)<select id="v9HelpOrder"><option value="">General support</option></select></label>
+   </div>
+   <label>Title<input id="v9HelpTitle" minlength="5" maxlength="130" required placeholder="Describe the issue briefly"></label>
+   <label>What happened?<textarea id="v9HelpDescription" minlength="10" maxlength="2000" required placeholder="Provide useful details. Never share your password or OTP."></textarea></label>
+   <button type="submit" class="v9c-btn">Send Ticket to USE ME Owner</button>
+  </form>
+  <p id="v9HelpStatus" class="v9c-muted" role="status">Refunds and returns require Owner review. Submitting a ticket does not automatically issue a payment.</p>
+ </div>
+ <div class="v9c-panel">
+  <div class="v9c-row" style="justify-content:space-between"><h2>My Support Tickets</h2><button id="v9HelpTicketsRefresh" type="button" class="v9c-soft">↻ Refresh</button></div>
+  <div id="v9HelpTickets">Sign in to view your requests.</div>
+ </div>
+ <div class="v9c-panel" id="v9HelpConversation" hidden>
+  <h2 id="v9ConversationTitle">Private Support Conversation</h2>
+  <div id="v9HelpMessages" class="v9c-messages" aria-live="polite"></div>
+  <form id="v9HelpReplyForm" class="v9c-form"><label>Reply to USE ME Support<textarea id="v9HelpReply" minlength="2" maxlength="1200" required placeholder="Your private message"></textarea></label>
+  <button type="submit" class="v9c-btn">Send Reply</button></form>
+ </div>
+</section>
+
+<section id="ownerSupport" class="page" aria-label="USE ME Owner-only help desk and review moderation">
+ <div class="v9c-hero"><small>✦ VERIFIED USE ME OWNER</small><h1>🛡️ Customer Support Control</h1><p>Private support tickets, reply permissions, genuine product reviews and moderation — accessible only with Owner privileges.</p></div>
+ <div class="v9c-panel"><div class="v9c-row" style="justify-content:space-between"><h2>Customer Tickets</h2><button id="v9OwnerSupportRefresh" type="button" class="v9c-soft">↻ Refresh</button></div>
+  <p id="v9OwnerSupportStatus" class="v9c-muted" role="status">Checking Owner permissions…</p>
+  <div id="v9OwnerSupportList"></div>
+ </div>
+ <div class="v9c-panel"><div class="v9c-row" style="justify-content:space-between"><h2>Verified Review Approval Queue</h2><button id="v9OwnerReviewRefresh" type="button" class="v9c-soft">↻ Refresh</button></div>
+  <p class="v9c-muted">Only reviews submitted by customers whose relevant order is Delivered can reach this queue. Approve before they appear publicly.</p>
+  <div id="v9OwnerReviewQueue"></div>
+ </div>
+</section>
