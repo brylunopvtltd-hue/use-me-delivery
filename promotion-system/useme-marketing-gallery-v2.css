@@ -1,0 +1,61 @@
+/* USE ME Marketing Gallery V2 — original 1672 x 941 promotional artwork. */
+.useme-campaign-slide.useme-campaign-fullart {
+ position:relative!important;display:block!important;aspect-ratio:1672/941!important;
+ width:100%;min-height:0!important;max-height:none!important;overflow:hidden;
+ background:#0d4089;border-radius:inherit;color:white;
+}
+.useme-campaign-slide.useme-campaign-fullart .useme-campaign-media{
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+ display:block!important;overflow:hidden!important;padding:0!important;background:none!important;
+}
+.useme-campaign-slide.useme-campaign-fullart .useme-campaign-media img{
+ display:block!important;width:100%!important;height:100%!important;
+ margin:0!important;padding:0!important;object-fit:cover!important;
+ filter:none!important;max-width:none!important;border-radius:0!important;
+}
+.useme-campaign-slide.useme-campaign-fullart .useme-campaign-image-link{
+ position:absolute!important;inset:0!important;z-index:2!important;
+ display:block!important;width:100%!important;height:100%!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ border-radius:0!important;font-size:0!important;color:transparent!important;cursor:pointer;
+}
+.useme-campaign-slide.useme-campaign-fullart .useme-campaign-image-link:focus-visible {
+ outline:4px solid #fff000!important;outline-offset:-6px!important;
+}
+.useme-campaign-slide.useme-campaign-fullart .useme-campaign-fullart-sponsor{
+ position:absolute;top:8px;left:10px;background:#102849e8;color:#fff;z-index:5;
+ padding:5px 9px;font-size:11px;font-weight:900;border-radius:999px;
+}
+.useme-promo-carousel .useme-campaign-slide.useme-campaign-fullart{min-height:0!important}
+.useme-promo-shop .useme-campaign-slide.useme-campaign-fullart{min-height:0!important}
+.useme-promo-carousel .useme-campaign-controls{z-index:9!important}
+.useme-campaign-slide.useme-campaign-fullart::before{content:none!important}
+.useme-public-news{margin:16px 0;padding:14px 15px 17px;
+ background:#fff;border:1px solid #dfebf7;border-radius:16px;
+ box-shadow:0 6px 23px #1539560c}
+.useme-public-news .useme-news-head{display:flex;align-items:center;justify-content:space-between;gap:13px;margin-bottom:11px}
+.useme-public-news .useme-news-head h2{font-size:18px;font-weight:900;line-height:1.35;margin:0;color:#213951}
+.useme-public-news .useme-news-head a{white-space:nowrap;font-size:11px;color:#1368ba;font-weight:850;text-decoration:none}
+.useme-public-news [data-public-owner-announcements]{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.useme-public-news .owner-public-notice{padding:12px!important;border:1px solid #e1ebf6!important;border-radius:12px!important;background:#f8fbff!important;margin:0!important}
+.useme-public-news .owner-public-notice strong{color:#214b71!important;font-size:12px!important;line-height:1.4}
+.useme-public-news .owner-public-notice p{font-size:11px!important;line-height:1.55!important;color:#587592!important;margin:7px 0 0!important;overflow-wrap:anywhere}
+.useme-public-news .owner-public-announcements.hidden{display:none!important}
+.useme-public-news:has(> [data-public-owner-announcements].hidden){display:none}
+#usemePromoHomeMain .useme-public-news{margin:13px 0 2px}
+#usemePromoHomeMain .useme-public-news [data-public-owner-announcements]{grid-template-columns:repeat(3,minmax(0,1fr))}
+#usemeOffersNews{margin:15px 0}
+#buy .owner-public-announcements{margin:16px 0!important}
+#buy #liveProducts + [data-public-owner-announcements]{margin:16px 0!important}
+@media(max-width:760px){.useme-public-news [data-public-owner-announcements]{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:520px){
+ .useme-public-news{padding:12px;margin:11px 0;border-radius:13px}
+ .useme-public-news .useme-news-head h2{font-size:16px}
+ .useme-public-news [data-public-owner-announcements]{grid-template-columns:1fr!important;gap:7px}
+ #usemePromoHomeMain .useme-public-news [data-public-owner-announcements]{display:flex!important;overflow-x:auto;scroll-snap-type:x proximity;gap:9px;padding-bottom:4px}
+ #usemePromoHomeMain .useme-public-news .owner-public-notice{flex:0 0 85%;scroll-snap-align:start;min-height:90px}
+ .useme-promo-carousel .useme-campaign-controls{bottom:4px!important;gap:7px}
+ .useme-promo-carousel .useme-campaign-controls>button{width:24px!important;height:23px!important;font-size:19px!important}
+ .useme-campaign-slide.useme-campaign-fullart{min-height:0!important}
+}
+@media(prefers-reduced-motion:reduce){.useme-campaign-fullart *{transition:none!important;animation:none!important}}
