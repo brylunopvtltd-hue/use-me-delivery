@@ -10,7 +10,7 @@ const linkOK=path=>typeof path==='string'&&/^\/(shop|offers|send|ride|wholesale|
 const money=n=>'LKR '+Number(n||0).toLocaleString('en-LK',{maximumFractionDigits:2});
 const safeText=s=>String(s||'').slice(0,260);
 const token=()=>Math.random().toString(36).slice(2,8);
-let promos=[],allProducts=[],productMap=new Map(),claims=new Set(),timers=[],ownerRows=[],editId=null,adminReady=false,ownerProducts=[],popupTimer=null;
+let pollingTimer=null;let promos=[],allProducts=[],productMap=new Map(),claims=new Set(),timers=[],ownerRows=[],editId=null,adminReady=false,ownerProducts=[],popupTimer=null;
 const kindText={banner:'Banner',ad:'Sponsored ad',ticker:'News ticker',flash:'Flash promotion',coupon:'Voucher',collection:'Collection',popup:'Pop-up'};
 const productURL=p=>{
  if(!p||!p.image_path||typeof productImageUrl!=='function')return '';
@@ -437,7 +437,7 @@ function start(){
  $('usemePromoPopup')?.addEventListener('click',e=>{if(e.target===$('usemePromoPopup'))e.currentTarget.hidden=true});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('usemeQuickOverlay'))$('usemeQuickOverlay').hidden=true;if($('usemePromoPopup'))$('usemePromoPopup').hidden=true}});
  attachOwner();attachQuickObserver();
- if(db()){loadPublic().catch(e=>console.warn('Promotions unavailable:',e));timers.push(setInterval(()=>{if(!document.hidden)loadPublic()},60000));
+ if(db()){loadPublic().catch(e=>console.warn('Promotions unavailable:',e));if(!pollingTimer)pollingTimer=setInterval(()=>{if(!document.hidden)loadPublic()},60000);
   db().auth.onAuthStateChange(()=>setTimeout(()=>{loadClaims().then(()=>{renderCoupons('usemePromoHomeCoupons','home');renderCoupons('usemePromoShopCoupons','shop')})},100));
  }
 }
