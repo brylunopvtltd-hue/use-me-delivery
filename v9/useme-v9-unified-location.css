@@ -1,0 +1,61 @@
+/* USE ME V9: shared, explicitly selected location — one-time setup, change any time. */
+#usemeGlobalLocationBar {
+ position:sticky;top:69px;z-index:19;
+ display:flex;align-items:center;justify-content:space-between;
+ gap:12px;max-width:100%;
+ padding:7px max(17px,calc((100vw - 1180px)/2));
+ background:linear-gradient(100deg,rgba(235,247,255,.97),rgba(255,250,231,.97));
+ border-bottom:1px solid #d8e8f6;
+ box-shadow:0 5px 13px #26496d0a;backdrop-filter:blur(12px);
+}
+#usemeGlobalLocationBar .useme-loc-bar-summary{display:flex;flex-direction:column;min-width:0;gap:1px}
+#usemeGlobalLocationBar .useme-loc-badge{font-size:10px;color:#167b77;font-weight:900;letter-spacing:.1px;line-height:1.4}
+#usemeGlobalLocationBar .useme-loc-summary{font-size:12px;color:#1c4367;font-weight:900;line-height:1.3;white-space:nowrap;max-width:min(500px,58vw);overflow:hidden;text-overflow:ellipsis}
+#usemeGlobalLocationBar .useme-loc-top-btn{border:1px solid #afd5f6;border-radius:999px;white-space:nowrap;background:#fff;color:#0c66a8;font-size:11px;min-height:34px;padding:7px 13px;font-weight:950;box-shadow:0 3px 10px #2a57900c}
+.useme-loc-overlay[hidden],#usemeLocPickerMap[hidden],.useme-loc-owner[hidden],#usemeLocOwnerTitle[hidden]{display:none!important}
+.useme-loc-overlay{position:fixed;inset:0;z-index:100000;display:grid;place-items:end center;background:#091d37b8;padding:12px;backdrop-filter:blur(6px)}
+.useme-loc-open{overflow:hidden}
+.useme-loc-dialog{display:flex;flex-direction:column;gap:11px;width:min(620px,100%);max-height:min(94vh,960px);overflow:auto;overscroll-behavior:contain;background:#fff;color:#183952;border-radius:22px 22px 18px 18px;padding:18px 20px 22px;box-shadow:0 25px 80px #05112466;scrollbar-width:thin}
+.useme-loc-dialog-top{display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:-18px;z-index:5;padding:13px 0;background:linear-gradient(#fff 90%,#fff9)}
+.useme-loc-dialog-top h2{margin:0!important;color:#143e67;font-size:19px;font-weight:950;letter-spacing:-.5px}
+.useme-loc-close{flex:0 0 auto;min-height:35px;min-width:39px;padding:7px 11px;background:#f0f5fb;border-radius:12px;color:#385774;font-size:15px;font-weight:900}
+.useme-loc-current{margin:1px 0 0!important;padding:11px 13px;background:#e9f6ff;border:1px solid #cae8fc;border-radius:11px;color:#204c73;font-size:13px;font-weight:750;line-height:1.5;overflow-wrap:anywhere}
+.useme-loc-hint{color:#687f95;font-size:11px;line-height:1.65;margin:0}
+.useme-loc-label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#345575;font-weight:830}
+.useme-loc-label input{width:100%;min-height:42px;font-size:14px;color:#173b5f;background:#f9fbfe;border:1px solid #cfdfed;border-radius:10px;padding:10px 11px}
+.useme-loc-button-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:5px 0}
+.useme-loc-button-grid button{min-height:42px;font-weight:850;font-size:12px;border-radius:11px;padding:10px 12px}
+.useme-loc-primary{background:linear-gradient(120deg,#065fad,#1889d8)!important;color:white!important;padding:10px 14px;border:0;border-radius:11px;font-size:12px;min-height:42px;font-weight:920;cursor:pointer}
+.useme-loc-secondary{background:#eaf3ff!important;color:#185c96!important;padding:10px 14px;border:1px solid #d5e7f9;border-radius:11px;font-weight:850;font-size:12px;min-height:42px}
+.useme-loc-muted{background:#fff2f0!important;color:#9b423e!important;border:1px solid #f8d9d6;border-radius:11px;padding:10px 14px;min-height:42px;font-weight:830}
+.useme-loc-button-grid .useme-loc-muted{grid-column:1 / -1}
+.useme-loc-dialog button:disabled{opacity:.53;cursor:not-allowed}
+.useme-loc-map-picker{display:flex;flex-direction:column;gap:9px;background:#f4f9ff;border:1px solid #d9e7f5;border-radius:15px;padding:10px}
+.useme-loc-map{height:clamp(190px,35vh,340px);border-radius:12px;overflow:hidden;background:#dbe9f5;position:relative;z-index:1}
+.useme-loc-coordinate-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.useme-loc-map-picker>button{width:100%}
+.useme-loc-dialog h3{font-weight:950;font-size:15px;margin:7px 0 0;color:#214b75}
+.useme-loc-saved-places{display:grid;gap:6px}
+.useme-loc-saved-row{display:flex;align-items:center;justify-content:space-between;gap:11px;padding:9px 12px;background:#f6f9fd;border:1px solid #e4ecf5;border-radius:11px}
+.useme-loc-saved-text{min-width:0;display:flex;flex-direction:column;gap:3px}
+.useme-loc-saved-text strong{color:#1b4164;font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.useme-loc-saved-text small{color:#73869a;font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.useme-loc-small{padding:7px 13px;border-radius:9px;background:#dbeefa;color:#17669b;font-size:12px;font-weight:850}
+.useme-loc-owner{display:grid;gap:8px;padding:12px;background:#f4f6fc;border:1px solid #dce6f2;border-radius:13px}
+.useme-loc-owner button{width:100%}
+.useme-loc-dialog-status{font-size:12px;color:#255b83;line-height:1.55;margin:0;padding:9px 12px;background:#eef7ff;border-radius:9px;overflow-wrap:anywhere}
+#usemeLocMapUseButton,#usemeLocOwnerBaseQuickSave,#usemeLocOwnerBaseQuickRemove{width:100%;margin:9px 0}
+.useme-loc-map-choice{margin:10px 0;padding:10px 12px;background:#f4faff;border:1px solid #cfe6fb;border-radius:10px;font-size:12px;color:#2a5b7f}
+@media(max-width:520px){
+ #usemeGlobalLocationBar{top:50px;padding:5px 11px;gap:6px}
+ #usemeGlobalLocationBar .useme-loc-summary{font-size:11px;max-width:54vw}
+ #usemeGlobalLocationBar .useme-loc-badge{font-size:9px}
+ #usemeGlobalLocationBar .useme-loc-top-btn{padding:5px 9px;min-height:32px;font-size:10px}
+ .useme-loc-overlay{padding:0;align-items:end}
+ .useme-loc-dialog{max-height:94dvh;border-radius:19px 19px 0 0;padding:10px 13px 30px;gap:9px}
+ .useme-loc-dialog-top{top:-10px;padding:13px 0}
+ .useme-loc-dialog-top h2{font-size:18px}
+ .useme-loc-map{height:30dvh;min-height:190px}
+ .useme-loc-button-grid button{font-size:11px;padding:8px}
+}
+@media(prefers-reduced-motion:reduce){.useme-loc-overlay *,#usemeGlobalLocationBar *{animation:none!important;transition:none!important}}
