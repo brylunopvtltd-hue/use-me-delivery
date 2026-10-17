@@ -69,17 +69,22 @@ Deno.serve(async req=>{
  }
  if(!valid(target)||accuracy<0||accuracy>1500)return json(422,{status:"gps_invalid_or_inaccurate",message:"Choose an accurate customer pin and retry."},origin);
  // Owner's private GPS never appears in the response.
- const [originRes,settingsRes]=await Promise.all([
+ const [originRes,baseRes,settingsRes]=await Promise.all([
   admin.from("useme_v9_owner_rate_origin").select("latitude,longitude,accuracy_m,enabled,updated_at,expires_at").eq("id",1).maybeSingle(),
+  admin.from("useme_v9_owner_dispatch_base").select("latitude,longitude,accuracy_m,location_source,updated_at").eq("id",1).maybeSingle(),
   admin.from("useme_owner_settings").select("min_delivery_lkr,reference_roundtrip_km,reference_delivery_lkr").eq("id",1).single()
  ]);
- const o=originRes.data;
- if(originRes.error||settingsRes.error)return json(503,{status:"settings_unavailable"},origin);
- if(!o||!o.enabled||new Date(o.expires_at).getTime()<=Date.now()||
-   Date.now()-new Date(o.updated_at).getTime()>180000||number(o.accuracy_m,1e6)>1500)
-   return json(409,{status:"owner_gps_off",message:"USE ME Owner must activate a recent private GPS origin before automatic pricing. Manual owner quote is still available."},origin);
+ if(originRes.error||baseRes.error||settingsRes.error)return json(503,{status:"settings_unavailable"},origin);
+ const live=originRes.data;
+ const freshLive=live?.enabled&&new Date(live.expires_at).getTime()>Date.now()&&
+   Date.now()-new Date(live.updated_at).getTime()<180000&&number(live.accuracy_m,1e6)<=1500;
+ // A saved dispatch base is a fixed owner-selected business origin, never implied LIVE GPS.
+ const sourceType=freshLive?"private_live_origin":baseRes.data?"owner_saved_dispatch_base":null;
+ const o=freshLive?live:baseRes.data;
+ if(!sourceType||!o)return json(409,{status:"owner_location_not_configured",
+   message:"USE ME Owner must select a dispatch base ONCE, or temporarily enable live pricing GPS. Request a manual quote meanwhile."},origin);
  const start=coord(o.latitude,o.longitude);
- if(!valid(start))return json(409,{status:"owner_gps_off"},origin);
+ if(!valid(start))return json(409,{status:"owner_location_invalid"},origin);
  const throttle=await admin.from("useme_v9_road_quote_rate_limits").select("last_requested_at").eq("user_id",userId).maybeSingle();
  if(throttle.data&&Date.now()-new Date(throttle.data.last_requested_at).getTime()<12000)
    return json(429,{status:"cooldown",message:"Please wait 12 seconds between requests."},origin);
@@ -148,7 +153,9 @@ Deno.serve(async req=>{
   delivery_fee_lkr:fee,minimum_fee_lkr:min,
   reference_roundtrip_km:refKm,reference_delivery_lkr:refLkr,
   surcharge_lkr:0,accuracy_m:accuracy,quote_time:new Date().toISOString(),
-  owner_location_age_seconds:Math.floor((Date.now()-new Date(o.updated_at).getTime())/1000),
-  message:"Real road-route estimate only. USE ME Owner confirms final fee, difficult-road surcharge and availability."
+  origin_kind:sourceType,owner_location_age_seconds:freshLive?Math.floor((Date.now()-new Date(o.updated_at).getTime())/1000):null,
+  message:sourceType==="owner_saved_dispatch_base"
+   ?"Road quote from the Owner's previously selected dispatch BASE, not the Owner's live GPS. USE ME Owner confirms final fee, road conditions and availability."
+   :"Real road-route estimate from fresh private Owner GPS. USE ME Owner confirms final fee, road conditions and availability."
  },origin);
 });
