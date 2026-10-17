@@ -1,0 +1,37 @@
+/* USE ME V9 — Consent-based accurate road fee, mobile-first */
+.useme-road-card{background:linear-gradient(140deg,#f5faff,#fffaf2);border:1px solid #bcdcf2;border-radius:17px;padding:15px;margin:14px 0;box-shadow:0 5px 18px #123c6811;color:#23445f}
+.useme-road-card h2{font-size:18px;line-height:1.25;margin:0 0 6px;color:#1b4c81;font-weight:950}
+.useme-road-card .useme-road-lead{font-size:12px;line-height:1.55;color:#4a6c88;margin:6px 0 11px}
+.useme-road-card .useme-road-buttons{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}
+.useme-road-card .useme-road-buttons button{border:0;border-radius:10px;font-weight:900;min-height:40px;padding:8px 11px;font-size:12px;cursor:pointer}
+.useme-road-primary{background:#096fbe!important;color:#fff!important}
+.useme-road-secondary{background:#e4f1ff!important;color:#155b91!important}
+.useme-road-danger{background:#fff0ed!important;color:#b04d3d!important}
+.useme-road-card button:disabled{opacity:.6;cursor:not-allowed}
+.useme-road-status{background:#e9f4ff;border-radius:9px;padding:10px 12px;color:#326087;font-size:12px;line-height:1.55;margin:10px 0;min-height:18px;overflow-wrap:anywhere}
+.useme-road-result{background:white;border:1px solid #d0e2f4;border-radius:13px;padding:14px;margin:10px 0}
+.useme-road-result[hidden]{display:none!important}
+.useme-road-result-title{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:12px;color:#326488;font-weight:900;margin-bottom:12px}
+.useme-road-price{color:#d96d13;font-size:clamp(22px,5vw,29px);font-weight:1000;letter-spacing:-.6px}
+.useme-road-km{font-size:13px;font-weight:800;color:#1d3c5c;margin:6px 0}
+.useme-road-small{border-top:1px solid #e9eff6;margin-top:10px;padding-top:9px;font-size:11px;line-height:1.6;color:#6d8092}
+.useme-road-disclaimer{background:#fff7e5;padding:10px;border-radius:9px;color:#8a5a23;font-size:11px;line-height:1.5;margin:8px 0 0}
+.useme-road-owner{background:linear-gradient(125deg,#0e2b55,#145c84);color:#fff;border-color:#1f7a9b}
+.useme-road-owner h2{color:#fff}
+.useme-road-owner .useme-road-lead{color:#dfecf9}
+.useme-road-owner .useme-road-status{color:#e7f2fc;background:#ffffff17}
+.useme-road-owner .useme-road-secondary{background:#c7efff!important;color:#17496d!important}
+.useme-road-owner .useme-road-danger{background:#ffcfbb!important;color:#913f24!important}
+.useme-road-map-preview{margin:8px 0 15px}
+.useme-road-quote-label{font-size:12px;color:#3c6385;margin:0 0 7px}
+#usemeRoadFeeMap .useme-road-card{margin-top:12px}
+@media(max-width:500px){
+ .useme-road-card{padding:12px 11px;border-radius:13px}
+ .useme-road-card h2{font-size:16px}
+ .useme-road-buttons{display:grid!important;grid-template-columns:1fr 1fr}
+ .useme-road-buttons button{width:100%;min-height:42px;font-size:11px!important}
+ .useme-road-primary{grid-column:1/-1}
+ .useme-road-result-title{gap:6px;font-size:11px}
+ .useme-road-price{font-size:25px}
+}
+@media(prefers-reduced-motion:reduce){.useme-road-card *{transition:none!important;animation:none!important}}
