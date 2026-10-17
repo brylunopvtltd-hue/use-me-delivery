@@ -16,7 +16,7 @@ const productURL=p=>{
  if(!p||!p.image_path||typeof productImageUrl!=='function')return '';
  try{return productImageUrl(p.image_path)||''}catch(e){return ''}
 };
-const approvedHostedImage=uri=>typeof uri==='string'&&/^https:\/\/usemeservice[.]wordpress[.]com\/wp-content\/uploads\/[0-9]{4}\/[0-9]{2}\/use-me-[a-z0-9-]+[.](png|jpg|jpeg|webp)$/.test(uri);
+const approvedHostedImage=uri=>typeof uri==='string'&&/^https:\/\/(?:usemeservice|zunora)[.]wordpress[.]com\/wp-content\/uploads\/[0-9]{4}\/[0-9]{2}\/use-me-[a-z0-9-]+[.](png|jpg|jpeg|webp)$/.test(uri);
 const highResImage=(uri,width=1200)=>approvedHostedImage(uri)?uri+'?w='+width:uri;
 const imageURL=path=>{
  if(!path||!/^campaigns\/[0-9a-f-]{36}\.(jpg|jpeg|png|webp)$/i.test(path)||!db())return '';
