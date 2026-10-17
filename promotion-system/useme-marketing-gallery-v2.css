@@ -1,4 +1,5 @@
 /* USE ME Marketing Gallery V2 — original 1672 x 941 promotional artwork. */
+.useme-campaign-slide.useme-campaign-fullart[hidden]{display:none!important}
 .useme-campaign-slide.useme-campaign-fullart {
  position:relative!important;display:block!important;aspect-ratio:1672/941!important;
  width:100%;min-height:0!important;max-height:none!important;overflow:hidden;
