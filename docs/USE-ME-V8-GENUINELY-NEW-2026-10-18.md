@@ -26,6 +26,7 @@ The user confirmed that the existing Homepage Carousel, Promotions, Categories, 
 - `useme_v8_otp_attempt_lockout_persists`
 - `useme_v8_owner_confirmed_cash_and_b2b_status_notifications`
 - `useme_v8_real_b2b_owner_notifications`
+- `useme_v8_loyalty_direct_write_privilege_hardening` (direct UPDATE/INSERT on wallet/coins revoked from authenticated clients; only guarded database functions can award coins)
 
 Primary RLS: private Wishlist, recent items, wallets, coin ledger, B2B buyer/owner data, Owner-only finance; unprivileged direct OTP table access revoked. Owner-only requests/commands via auth checks. Seller cannot read other customer orders under pre-existing orders policies.
 
