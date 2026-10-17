@@ -163,4 +163,170 @@ async function loadEligibleReviewOrders(productId){
  if(items.error){select.append(elem('option','','Product delivery history unavailable'));return}
  productOrders=[...new Set((items.data||[]).map(x=>x.order_id))];
  if(!productOrders.length){select.append(elem('option','','No delivered order containing this product'));return}
- productOrders.forEach(id=>{const o=elem('option','',id.slice(0,8)+' --- TRUNCATED --- 23,063 chars
+ productOrders.forEach(id=>{const o=elem('option','',id.slice(0,8)+' · Delivered');o.value=id;select.append(o)});
+}
+async function submitReview(e){
+ e.preventDefault();const u=await user();if(!u){safeStatus('v9ReviewStatus','Sign in first.');return}
+ if(!publicProduct||!productOrders.includes($('v9ProductReviewOrder')?.value))return safeStatus('v9ReviewStatus','Select an eligible delivered order.');
+ const r=await db().rpc('useme_v9_submit_review',{
+  p_order_id:$('v9ProductReviewOrder').value,p_product_id:publicProduct.id,
+  p_rating:Number($('v9ReviewRating').value),p_text:$('v9ReviewText').value.trim()
+ });
+ safeStatus('v9ReviewStatus',r.error?'Review not saved: '+r.error.message:'✓ Verified review submitted for Owner approval. It is not publicly visible yet.');
+ if(!r.error){$('v9ProductReviewForm').reset();loadEligibleReviewOrders(publicProduct.id)}
+}
+async function renderShop(){
+ const root=$('v9ShopDetails');if(!root)return;root.replaceChildren();
+ const id=location.pathname.match(/^\/shops\/([0-9a-f-]{36})\/?$/i)?.[1];
+ if(!uuid(id)){root.textContent='Choose a shop from the marketplace.';return}
+ const s=await db().from('shops').select('id,name,status').eq('id',id).eq('status','approved').maybeSingle();
+ if(s.error||!s.data){root.textContent='Shop unavailable or awaiting approval.';return}
+ root.append(elem('h2','','🏪 '+s.data.name),elem('p','v9c-muted','Verified USE ME merchant. Products are listed by this shop; all customer orders are managed and delivered by USE ME Owner.'));
+ const grid=elem('div','v9c-grid');
+ root.append(grid);
+ const pageSize=40;let offset=0,busy=false;
+ const more=elem('button','btn','Load more products');more.type='button';
+ async function nextPage(){
+  if(busy)return;busy=true;more.disabled=true;
+  try{
+   const result=await db().from('products')
+    .select('id,shop_id,name,category,description,price_lkr,stock,active,image_path')
+    .eq('shop_id',id).eq('active',true).order('created_at',{ascending:false}).range(offset,offset+pageSize-1);
+   if(result.error){if(!offset)root.append(elem('p','v9c-muted','Unable to load shop products.'));return}
+   const part=result.data||[];
+   part.forEach(p=>grid.append(card({...p,shop_name:s.data.name})));
+   offset+=part.length;
+   if(!offset)root.append(elem('p','v9c-muted','No published products in this shop right now.'));
+   if(part.length===pageSize){more.disabled=false;root.append(more)}else more.remove();
+  }finally{busy=false}
+ }
+ more.addEventListener('click',nextPage);
+ await nextPage();
+}
+async function fillHelpOrderSelect(){
+ const picker=$('v9HelpOrder');if(!picker)return;picker.replaceChildren();
+ const none=elem('option','','General support (no order)');none.value='';picker.append(none);
+ const u=await user();if(!u)return;
+ const r=await db().from('orders').select('id,status,service_type').eq('customer_id',u.id).order('created_at',{ascending:false}).limit(50);
+ if(r.error)return;
+ (r.data||[]).forEach(o=>{const x=elem('option','',o.service_type+' #'+o.id.slice(0,8)+' · '+o.status);x.value=o.id;picker.append(x)});
+}
+async function helpInit(){await fillHelpOrderSelect();await loadSupportTickets()}
+async function loadSupportTickets(){
+ const root=$('v9HelpTickets');if(!root)return;root.replaceChildren();
+ const u=await user();if(!u){root.append(elem('p','v9c-muted','Sign in to send secure support requests and see replies.'));return}
+ const r=await db().from('useme_v9_support_tickets').select('id,title,category,state,owner_note,created_at')
+ .eq('customer_id',u.id).order('created_at',{ascending:false}).limit(50);
+ if(r.error){root.textContent='Unable to load support cases: '+r.error.message;return}
+ if(!r.data?.length){root.append(elem('p','v9c-muted','No support requests yet.'));return}
+ r.data.forEach(t=>{
+  const card=elem('div','v9c-ticket');
+  card.append(elem('b','',t.title),elem('small','',t.state.toUpperCase()+' · '+t.category+' · '+new Date(t.created_at).toLocaleString()));
+  card.append(button('Open conversation',()=>openTicket(t.id),'v9c-soft'));root.append(card);
+ });
+}
+async function newTicket(e){
+ e.preventDefault();
+ const u=await user();if(!u)return safeStatus('v9HelpStatus','Sign in first to create a private support ticket.');
+ const data={
+  customer_id:u.id,
+  order_id:$('v9HelpOrder').value||null,
+  category:$('v9HelpCategory').value,
+  title:$('v9HelpTitle').value.trim(),
+  description:$('v9HelpDescription').value.trim()
+ };
+ const r=await db().from('useme_v9_support_tickets').insert(data).select('id').single();
+ safeStatus('v9HelpStatus',r.error?'Ticket not created: '+r.error.message:'✓ Private support ticket submitted; Owner will see it in the Support Desk.');
+ if(!r.error){$('v9HelpForm').reset();loadSupportTickets();openTicket(r.data.id)}
+}
+async function openTicket(id){
+ if(!uuid(id))return;
+ activeTicket=id;
+ const section=$('v9HelpConversation');if(!section)return;
+ section.hidden=false;section.scrollIntoView({behavior:'smooth',block:'nearest'});
+ const root=$('v9HelpMessages');root.replaceChildren();
+ const r=await db().from('useme_v9_support_messages').select('sender_id,message,created_at').eq('ticket_id',id).order('created_at',{ascending:true}).limit(100);
+ const u=await user();
+ if(r.error){root.textContent='This ticket conversation is private or unavailable.';return}
+ if(!r.data?.length)root.append(elem('p','v9c-muted','Ticket opened. New messages will appear here.'));
+ (r.data||[]).forEach(m=>{
+  const bubble=elem('div','v9c-message'+(u?.id===m.sender_id?' mine':''));bubble.append(elem('p','',m.message),elem('small','',new Date(m.created_at).toLocaleString()));root.append(bubble);
+ });
+ safeStatus('v9ConversationTitle','Support Ticket #'+id.slice(0,8));
+}
+async function sendTicketReply(e){
+ e.preventDefault();if(!uuid(activeTicket))return;
+ const u=await user();if(!u)return;
+ const text=$('v9HelpReply').value.trim();if(text.length<2)return;
+ const r=await db().from('useme_v9_support_messages').insert({ticket_id:activeTicket,sender_id:u.id,message:text});
+ safeStatus('v9HelpStatus',r.error?'Message not sent: '+r.error.message:'✓ Message saved on this private support case.');
+ if(!r.error){$('v9HelpReply').value='';openTicket(activeTicket)}
+}
+async function loadOwnerReviews(){
+ const root=$('v9OwnerReviewQueue');if(!root)return;
+ root.replaceChildren();
+ if(!await owner()){root.append(elem('p','v9c-muted','Owner login required.'));return}
+ const r=await db().from('useme_v9_verified_reviews').select('id,product_id,rating,review_text,created_at').eq('approved',false).order('created_at',{ascending:false}).limit(75);
+ if(r.error){root.textContent='Review moderation unavailable: '+r.error.message;return}
+ if(!r.data?.length){root.append(elem('p','v9c-muted','No pending verified product reviews.'));return}
+ const ids=[...new Set(r.data.map(x=>x.product_id))];
+ const items=await db().from('products').select('id,name').in('id',ids).limit(100);
+ const names=new Map((items.data||[]).map(x=>[x.id,x.name]));
+ r.data.forEach(x=>{
+  const panel=elem('article','v9c-owner-ticket');
+  panel.append(elem('b','','★'.repeat(x.rating)+'☆'.repeat(5-x.rating)+' · '+(names.get(x.product_id)||'Product')),
+   elem('p','',x.review_text),elem('small','','Submitted '+new Date(x.created_at).toLocaleString()));
+  panel.append(button('✓ Approve authentic review',async()=>{
+   if(!confirm('Approve this verified delivered-order review for public display?'))return;
+   const result=await db().from('useme_v9_verified_reviews').update({approved:true}).eq('id',x.id);
+   safeStatus('v9OwnerSupportStatus',result.error?'Could not approve review: '+result.error.message:'✓ Verified review approved for public display.');
+   if(!result.error)loadOwnerReviews();
+  },'v9c-buy'));
+  root.append(panel);
+ });
+}
+async function loadOwnerSupport(){
+ const root=$('v9OwnerSupportList');if(!root)return;root.replaceChildren();
+ if(!await owner()){safeStatus('v9OwnerSupportStatus','Verified Owner account required.');return}
+ const r=await db().from('useme_v9_support_tickets').select('id,title,description,category,state,owner_note,customer_id,created_at').order('created_at',{ascending:false}).limit(100);
+ if(r.error){safeStatus('v9OwnerSupportStatus','Support tickets unavailable: '+r.error.message);return}
+ safeStatus('v9OwnerSupportStatus',r.data.length+' recent private support requests. Customers cannot see other users’ tickets.');
+ loadOwnerReviews();
+ r.data.forEach(t=>{
+  const div=elem('article','v9c-owner-ticket');
+  div.append(elem('h3','',t.title),elem('p','',t.description),elem('small','',t.category+' · '+new Date(t.created_at).toLocaleString()));
+  const sel=elem('select');['open','in_review','resolved','closed'].forEach(st=>{const o=elem('option','',st);o.value=st;sel.append(o)});sel.value=t.state;
+  const note=elem('textarea');note.value=t.owner_note||'';note.placeholder='Owner resolution note (shown to ticket customer)';note.maxLength=1600;
+  const ctrl=elem('div','v9c-row');
+  ctrl.append(button('Open & Reply',()=>{
+   if(typeof go==='function')go('help',{url:'/help/ticket/'+t.id});
+   openTicket(t.id);
+  },'v9c-soft'));
+  ctrl.append(button('Save status',async()=>{
+   const ret=await db().from('useme_v9_support_tickets').update({state:sel.value,owner_note:note.value.trim(),updated_at:new Date().toISOString()}).eq('id',t.id);
+   safeStatus('v9OwnerSupportStatus',ret.error?'Could not save: '+ret.error.message:'✓ Support case updated.');if(!ret.error)loadOwnerSupport();
+  },'v9c-buy'));
+  div.append(sel,note,ctrl);root.append(div);
+ });
+}
+function attach(){
+ $('v9SearchForm')?.addEventListener('submit',e=>{e.preventDefault();const q=$('v9SearchInput').value.trim();history.replaceState({useme:'searchV9'},'','/search'+(q?'?q='+encodeURIComponent(q):''));renderSearch()});
+ for(const id of ['v9SearchCategory','v9SearchSort','v9SearchMaxPrice'])$(id)?.addEventListener('change',renderSearch);
+ $('v9VoiceSearch')?.addEventListener('click',voiceSearch);$('v9CompareButton')?.addEventListener('click',compare);
+ $('v9ProductReviewForm')?.addEventListener('submit',submitReview);
+ $('v9HelpForm')?.addEventListener('submit',newTicket);$('v9HelpReplyForm')?.addEventListener('submit',sendTicketReply);
+ $('v9HelpTicketsRefresh')?.addEventListener('click',loadSupportTickets);
+ $('v9OwnerSupportRefresh')?.addEventListener('click',loadOwnerSupport);
+ $('v9OwnerReviewRefresh')?.addEventListener('click',loadOwnerReviews);
+ const pages=[['searchV9',openSearch],['productDetails',renderProduct],['shopDetails',renderShop],['help',helpInit],['ownerSupport',loadOwnerSupport]];
+ pages.forEach(([id,fn])=>{
+  const el=$(id);if(!el)return;
+  new MutationObserver(()=>{if(el.classList.contains('active'))fn()}).observe(el,{attributes:true,attributeFilter:['class']});
+  if(el.classList.contains('active'))fn();
+ });
+ const grid=$('liveProducts');if(grid){new MutationObserver(addShopDetailsLink).observe(grid,{childList:true});addShopDetailsLink()}
+ if(db())db().auth.onAuthStateChange(()=>setTimeout(()=>{if($('help')?.classList.contains('active'))helpInit();if($('productDetails')?.classList.contains('active'))renderProduct()},300));
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',attach,{once:true});else attach();
+window.usemeV9Commerce={product:id=>navigate('/products/'+id),shop:id=>navigate('/shops/'+id),search:q=>navigate('/search?q='+encodeURIComponent(q))};
+})();
