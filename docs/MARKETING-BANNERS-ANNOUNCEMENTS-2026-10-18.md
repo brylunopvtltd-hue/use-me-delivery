@@ -9,24 +9,29 @@
 - Campaign management UI: Owner Dashboard → Ads & Offers
 - Official announcement management: Owner Dashboard → Announcements
 
-## Original design assets
-All six high-resolution original banners (1672 × 941 PNG) were uploaded into the user's USE ME SERVICE WordPress.com Media Library (media IDs 31–36). WordPress is used **only as a public media host**, NOT as the live website or source of truth for campaign content.
+## Live banner images and important media-host repair
 
-| Campaign artwork | Media URL | Live |
+Original artwork: six 1672 × 941 PNGs. For production, optimized full-resolution WEBP images (~130–160 KB each) were created.
+
+The initial USE ME SERVICE WordPress media URLs were **not publicly accessible** because that WordPress site is not launched. External validation failed, and a live screenshot showed broken image icons. The broken image links have been replaced with **public media-only uploads to the user-owned, publicly launched ZUNORA WordPress media library**. This is a temporary, cross-project CDN and should be migrated to dedicated USE ME storage when available. No ZUNORA posts or pages were modified.
+
+| Campaign | Public WebP media URL | Visibility |
 |---|---|---|
-| Discover & Shop | https://usemeservice.wordpress.com/wp-content/uploads/2026/10/use-me-marketplace-hero.png | Yes |
-| Daily Essentials | https://usemeservice.wordpress.com/wp-content/uploads/2026/10/use-me-daily-essentials.png | Yes |
-| Fast Delivery | https://usemeservice.wordpress.com/wp-content/uploads/2026/10/use-me-fast-delivery.png | Yes |
-| Refer & Earn | https://usemeservice.wordpress.com/wp-content/uploads/2026/10/use-me-refer-and-earn-coins.png | Yes |
-| New Announcements | https://usemeservice.wordpress.com/wp-content/uploads/2026/10/use-me-new-announcements.png | Yes |
-| Special Offers | https://usemeservice.wordpress.com/wp-content/uploads/2026/10/use-me-special-offers-draft.png | **Draft; not live** |
+| Marketplace | https://zunora.wordpress.com/wp-content/uploads/2026/10/use-me-marketing-hero.webp | Live |
+| Daily Essentials | https://zunora.wordpress.com/wp-content/uploads/2026/10/use-me-daily-essentials.webp | Live |
+| Delivery | https://zunora.wordpress.com/wp-content/uploads/2026/10/use-me-fast-delivery.webp | Live |
+| Refer & Earn | https://zunora.wordpress.com/wp-content/uploads/2026/10/use-me-refer-and-earn.webp | Live |
+| Announcements | https://zunora.wordpress.com/wp-content/uploads/2026/10/use-me-new-announcements.webp | Live |
+| Special Offers | https://zunora.wordpress.com/wp-content/uploads/2026/10/use-me-special-offers-draft.webp | Draft: **not live** |
 
-Campaign placement:
-- Homepage image carousel: 5 active informational campaigns (Shop, Delivery, Essentials, Rewards, Announcements), with image light optimization srcset and accessible click targets.
-- Shop carousel: after the real-product cards, not above them.
-- Offers page: eligible banners, collections, coupons, flashes, official announcements.
-- Existing seeded text-only banners paused, not deleted.
-- Flash/sale artwork intentionally kept draft pending verified inventory, discount pricing and campaign terms.
+### Verified corrective changes
+
+- Supabase external_image_url check restricts links to approved USE ME branded image names hosted at one of two user-owned WordPress domains.
+- Gallery JavaScript whitelist now accepts the live working host.
+- Gallery CSS override of the HTML hidden attribute was corrected via `.useme-campaign-slide.useme-campaign-fullart[hidden]{display:none!important}`. Previously it rendered all five carousel slides stacked.
+- Canva independently fetched the new public media URL successfully.
+- Cloudflare Browser Rendering screenshot after the fix showed one correctly displayed USE ME Marketplace image slide and slider controls.
+- DOM validation confirmed exactly one visible slide, with its natural image size 390×219 on the mobile screenshot viewport. Other lazy-loaded hidden slides initialize later.
 
 ## Website code and DB changes
 - `useme_campaigns.external_image_url` with a strict constraint allowing only images from the user's USE ME SERVICE WordPress media uploads folder. Custom owner-supplied Supabase Storage images take precedence.
