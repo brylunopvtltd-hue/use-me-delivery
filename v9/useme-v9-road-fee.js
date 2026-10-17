@@ -33,7 +33,7 @@ function showQuote(scope,q){
  const detail=document.createElement('div');detail.className='useme-road-small';
  detail.textContent='Minimum '+fmt(q.minimum_fee_lkr)+' · Reference '+q.reference_roundtrip_km+' KM = '+fmt(q.reference_delivery_lkr)+' · Surcharge '+fmt(q.surcharge_lkr)+' · Route ETA ~'+q.route_minutes+' min (no traffic data).';
  const disclaimer=document.createElement('p');disclaimer.className='useme-road-disclaimer';
- disclaimer.textContent='⚠️ Road-distance ESTIMATE. Owner confirms final route, product pickups and extra road charges before payment. Petrol is an Owner expense, not a customer fee.';
+ disclaimer.textContent='⚠️ '+(q.origin_kind==='owner_saved_dispatch_base'?'Calculated from the Owner’s SAVED dispatch base (not live GPS). ':'Calculated from an explicitly enabled private Owner GPS. ')+'Road-distance ESTIMATE. Owner confirms final route, pickup and road surcharges. Petrol is an Owner expense, not a customer fee.';
  box.append(head,route,total,detail,disclaimer);
  box.hidden=false;
 }
@@ -69,7 +69,10 @@ async function requestQuote(scope,pin){
  if(!user)return showLinkToLogin(scope);
  if(quoteBusy){boxText(scope,'Please wait for the current route calculation.');return}
  const tick=Date.now();if(lastRequote&&tick-lastRequote<12500){boxText(scope,'Road calculator is updating too quickly. Wait about 12 seconds.');return}
- const mode=scope==='cart'?'marketplace':scope==='service'&&$('serviceOrderType')?.value!=='parcel'?'direct':'direct';
+ if(scope==='service'&&$('serviceOrderType')?.value!=='parcel'){
+  resetQuote(scope,'Service pickup location is not yet confirmed. Automatic price needs the real shop pickup route; ask USE ME Owner for the full delivery quote.');return
+ }
+ const mode=scope==='cart'?'marketplace':'direct';
  if(scope==='cart'&&!shopIds().length){boxText(scope,'Add an approved shop product before estimating the complete pickup route.');return}
  quoteBusy=true;lastRequote=tick;
  boxText(scope,'🛣️ Checking actual roads between USE ME Owner, pickup points and your pin. Please wait...');
@@ -114,12 +117,17 @@ function getGPS(){
  });
 }
 async function capture(scope){
+ const cached=window.usemePreferredLocationCurrent?.();
+ if(scope==='map'&&cached&&ok(cached)){setPin(scope,cached);return}
  boxText(scope,'Requesting GPS permission — your location will be used for pricing only after you allow it.');
  if(scope!=='map'&&typeof window.usemeCaptureLocation==='function'){
   await window.usemeCaptureLocation(scope); // Existing order checkout GPS draft is updated too.
   return;
  }
- try{setPin(scope,await getGPS())}
+ try{const p=await getGPS();
+  if(scope==='map')await window.usemePreferredLocationSave?.({...p,label:'My Location',source:'gps'});
+  setPin(scope,p)
+ }
  catch(e){resetQuote(scope,e?.code===1?'Location permission denied. You may choose a destination on the map or request a manual quote.':limit(e.message||'GPS unavailable'))}
 }
 function stopWatching(message=true){
@@ -220,6 +228,11 @@ function start(){
  });
  window.addEventListener('useme:location-forgotten',event=>{const scope=event.detail?.scope;if(scope==='service'||scope==='cart')forget(scope)});
  window.addEventListener('useme:v9-pin-selected',event=>{const p=event.detail;if(ok(p)){state.map.pin={...p,accuracy:0,capturedAt:Date.now()};resetQuote('map','Selected destination pin on the USE ME map. Tap Calculate to request a road quote.')}});
+ window.addEventListener('useme:preferred-location-changed',event=>{
+  const p=event.detail?.location;
+  if(!p){for(const scope of ['cart','service','map'])resetQuote(scope,'Saved location cleared. Select your delivery pin to get a new road price.',true);return}
+  if(ok(p)&&$('map')?.classList.contains('active'))setPin('map',p,false);
+ });
  for(const scope of ['service','cart','map']){
   $('usemeRoadCapture_'+scope)?.addEventListener('click',()=>capture(scope));
   $('usemeRoadRecalc_'+scope)?.addEventListener('click',()=>currentPin(scope)?requestQuote(scope,currentPin(scope)):capture(scope));
@@ -231,6 +244,8 @@ function start(){
  }
  $('usemeOwnerRateStart')?.addEventListener('click',quoteOwnerStart);
  $('usemeOwnerRateStop')?.addEventListener('click',stopOwnerOrigin);
+ $('usemeLocOwnerBaseQuickSave')?.addEventListener('click',()=>window.usemePreferredOwnerBaseSave?.());
+ $('usemeLocOwnerBaseQuickRemove')?.addEventListener('click',()=>window.usemePreferredOwnerBaseClear?.());
  for(const id of ['orderKm','liveCheckoutKm','liveCheckoutRoad'])$(id)?.addEventListener('input',manualChanged);
  $('serviceOrderType')?.addEventListener('change',()=>{if(state.service.last)resetQuote('service','Service changed. Refresh the delivery quote; item pickup costs may affect final pricing.')});
  window.addEventListener('popstate',routeLife);
