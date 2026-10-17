@@ -13,7 +13,7 @@ const uuid=x=>/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(String(x||''))
 const ok=p=>p&&Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lng))&&Math.abs(Number(p.lat))<=90&&Math.abs(Number(p.lng))<=180;
 const GPS_NOTICE='After you permit location, your selected GPS pin is securely submitted for road-distance pricing. USE ME never shares the Owner’s private position with you. Road-routing service receives route locations. Actual quotation needs Owner approval.';
 const state={service:{pin:null,last:null},cart:{pin:null,last:null},map:{pin:null,last:null}};
-let watch=null,watchScope=null,lastRequote=0,ownerWatch=null,ownerRefreshTimer=null,lastOwnerSync=0,ownerActive=false;
+let watch=null,watchScope=null,delayedQuoteTimer=null,lastRequote=0,ownerWatch=null,ownerRefreshTimer=null,lastOwnerSync=0,ownerActive=false;
 let quoteBusy=false,ownerSyncBusy=false,navLocation=null;
 function boxText(scope,t){flag('usemeRoadStatus_'+scope,t)}
 async function currentUser(){
@@ -123,6 +123,7 @@ async function capture(scope){
  catch(e){resetQuote(scope,e?.code===1?'Location permission denied. You may choose a destination on the map or request a manual quote.':limit(e.message||'GPS unavailable'))}
 }
 function stopWatching(message=true){
+ if(delayedQuoteTimer!==null){clearTimeout(delayedQuoteTimer);delayedQuoteTimer=null}
  if(watch!==null&&'geolocation'in navigator){navigator.geolocation.clearWatch(watch);watch=null}
  if(watchScope&&message)boxText(watchScope,'✓ Live pin updates stopped. Last estimate is indicative; use Refresh for new GPS.');
  watchScope=null;
@@ -142,7 +143,15 @@ async function toggleWatch(scope){
   // Avoid sending extra position updates for tiny GPS drift or repeated fixes.
   if(last&&Math.abs(fresh.lat-last.lat)<.00045&&Math.abs(fresh.lng-last.lng)<.00045)return;
   if(scope!=='map'&&typeof window.usemeSetDeliveryDraftFromLiveGPS==='function')window.usemeSetDeliveryDraftFromLiveGPS(scope,fresh);
-  setPin(scope,fresh,Date.now()-lastRequote>=12500);
+  const eligible=Date.now()-lastRequote>=12500;
+  setPin(scope,fresh,eligible);
+  if(!eligible){
+   if(delayedQuoteTimer!==null)clearTimeout(delayedQuoteTimer);
+   delayedQuoteTimer=setTimeout(()=>{
+    delayedQuoteTimer=null;
+    if(watchScope===scope&&currentPin(scope))requestQuote(scope,currentPin(scope));
+   },Math.max(750,12550-(Date.now()-lastRequote)));
+  }
  },err=>{stopWatching(false);boxText(scope,err.code===1?'GPS permission denied; live updates stopped.':'GPS temporarily unavailable; live updates stopped.')},{enableHighAccuracy:true,maximumAge:0,timeout:23000});
 }
 async function quoteOwnerStart(){
