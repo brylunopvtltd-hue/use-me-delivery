@@ -4,8 +4,8 @@ Date: 18 October 2026
 ## Production
 - Website: https://use-me-superapp-web.bryluno-zunora.workers.dev/
 - Cloudflare Worker: `use-me-superapp-web`
-- Deployment ID: `ab9d3d74-dc83-496e-b541-720ce546c5ee`
-- Cloudflare version: `307044ef-4f56-420a-b200-e36423a1f6d5` (reported 100% deployed)
+- Deployment ID: `547a83d4-b61f-42a3-acea-84a53c37974e`
+- Current verified Cloudflare deployment routes 100% traffic. Latest patch adds existing USE ME branded artwork to default slides.
 - Supabase: `woytuayeuyfvucttvosw`
 - Source assets: `promotion-system/useme-promotions-v1.js`, `promotion-system/useme-promotions-v1.css`.
 - The repository root `index.html` is **not** a copy of this production Worker and must not replace the current deployment.
