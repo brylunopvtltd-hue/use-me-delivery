@@ -1,0 +1,86 @@
+
+<section id="map" class="page v9-map-shell" aria-label="USE ME interactive location map">
+ <div class="v9-hero"><div><small>✦ USE ME MAPS V9</small><h1>🗺️ Explore & Save Places</h1><p>Interactive in-app map. Find your location only with permission, tap to choose a point, and manage your own private saved places.</p></div><span class="v9-hero-icon" aria-hidden="true">📍</span></div>
+ <div class="v9-map-top-nav"><a href="/shop" class="v9-owner-dashboard-link">🛍️ Shop</a><a href="/send" class="v9-owner-dashboard-link">📦 Parcel</a><a href="/tracking" class="v9-owner-dashboard-link">🛵 Tracking</a></div>
+ <div class="v9-layout">
+  <div class="v9-card v9-main-map-card">
+   <div class="v9-section-header"><h2>Interactive Map</h2><button id="v9LocateMe" type="button" class="v9-button">⌖ Locate Me</button></div>
+   <div class="v9-map-wrap"><div id="v9PublicMap" class="v9-map-canvas" role="application" aria-label="Interactive map; tap to choose your own point"></div></div>
+   <p id="v9PublicStatus" class="v9-map-status" role="status">GPS is OFF. Tap Locate Me to request browser location permission.</p>
+   <p class="v9-note v9-privacy">🔒 Your selected pin stays on this device until you choose to save it. Map tiles are supplied by OpenStreetMap.</p>
+  </div>
+  <div>
+   <div class="v9-card"><h2>📌 Save My Place</h2><p class="v9-muted">Tap the map or Locate Me, then save a label. Each saved place is private to your account.</p>
+    <div class="v9-col"><label>Place name<input id="v9PlaceLabel" maxlength="60" placeholder="Home, Work, Pickup point"></label>
+    <label>Optional street/address<input id="v9PlaceAddress" maxlength="260" placeholder="Town, street (optional)"></label>
+    <button id="v9SavePlace" type="button" class="v9-primary">+ Save Selected GPS Pin</button></div>
+   </div>
+   <div class="v9-card"><div class="v9-section-header"><h2>My Saved Places</h2><button id="v9RefreshPlaces" type="button" class="v9-button-small">↻ Refresh</button></div><div id="v9SavedPlaces" class="v9-saved-items">Sign in to view saved places.</div></div>
+  </div>
+ </div>
+</section>
+
+<section id="ownerMap" class="page v9-map-shell" aria-label="USE ME Owner private live dispatch map">
+ <div class="v9-hero"><div><small>✦ VERIFIED OWNER ONLY</small><h1>🗺️ Owner Dispatch Map</h1><p>Shop pickup and customer drop-off pins, multi-stop planning, road preview and explicit consent-based live GPS — within USE ME.</p></div><span class="v9-hero-icon">🛵</span></div>
+ <div class="v9-map-top-nav"><a href="/owner" class="v9-owner-dashboard-link">← Owner Dashboard</a><a href="/tracking" class="v9-owner-dashboard-link">Customer Tracking</a></div>
+ <p id="v9OwnerAuth" class="v9-note v9-warning" role="status">🔒 Verifying Owner permissions…</p>
+ <div id="v9OwnerTools" hidden>
+  <div class="v9-layout">
+   <div>
+    <div class="v9-card v9-main-map-card">
+     <div class="v9-section-header"><h2>🔐 Private Dispatch Map</h2><button id="v9OwnerRefresh" type="button" class="v9-button-small">↻ Orders</button></div>
+     <div class="v9-map-wrap"><div id="v9OwnerMap" class="v9-map-canvas" role="application" aria-label="Owner-only interactive shop pickup and customer delivery map"></div></div>
+     <div class="v9-map-legend"><span>🏪 Pickup</span><span>🏠 Drop-off</span><span>🛵 Owner GPS</span></div>
+     <p id="v9OwnerStatus" class="v9-map-status" role="status">Loading private order pins…</p>
+     <div class="v9-row"><label>Select an order<select id="v9OwnerOrderSelect"><option value="">Select order…</option></select></label><button id="v9OwnerShowOrder" type="button" class="v9-secondary">View Pins</button></div>
+     <div class="v9-map-actions"><button id="v9AddSelectedPickup" class="v9-button-small" type="button">+ Shop Pickup</button><button id="v9AddSelectedCustomer" type="button" class="v9-button-small">+ Customer Drop-off</button></div>
+    </div>
+    <div class="v9-card">
+     <h2>🟢 Optional Owner Live GPS</h2>
+     <p class="v9-muted">Owner explicitly starts sharing ONLY for a selected Out for Delivery order. The specific Customer can see fresh GPS updates while sharing remains active. Customer access expires after 90 seconds without updates; a sharing session stops within 30 minutes.</p>
+     <button id="v9ShareButton" type="button" class="v9-button">▶ Start Live GPS Sharing</button>
+     <p id="v9LiveStatus" class="v9-map-status" role="status">Owner GPS Sharing: OFF. GPS is not uploaded.</p>
+    </div>
+   </div>
+   <div>
+    <div class="v9-card"><h2>📦 Order Pickup & Delivery</h2><div id="v9DispatchOrders" class="v9-order-items">Verified Owner login required.</div></div>
+    <div class="v9-card"><h2>🛣️ Multi-stop Route Planner</h2>
+     <div id="v9StopList" class="v9-stop-items" aria-live="polite"></div>
+     <div class="v9-route-fieldset"><label class="v9-checkbox"><input id="v9MapClickMode" type="checkbox"> Tap Map to Add a Custom Stop</label></div>
+     <div class="v9-col"><label>Custom stop label<input id="v9StopName" maxlength="90" placeholder="Pickup or drop-off"></label>
+     <div class="v9-form-grid"><label>Latitude<input id="v9StopLat" inputmode="decimal" type="number" min="-90" max="90" step="any"></label><label>Longitude<input id="v9StopLng" inputmode="decimal" type="number" min="-180" max="180" step="any"></label></div>
+     <button id="v9AddStop" type="button" class="v9-secondary">+ Add Stop</button></div>
+     <div class="v9-map-actions"><button id="v9Optimize" type="button" class="v9-secondary">↕ Suggest Stop Order</button>
+       <button id="v9RoadPreview" type="button" class="v9-button">🛣️ Road Route Preview</button>
+       <button id="v9ClearStops" type="button" class="v9-danger-small">Clear Draft</button></div>
+     <p class="v9-note v9-warning">Road preview sends selected stop coordinates to a third-party OSRM demo only after you confirm. No live traffic; not production navigation or an automatic delivery fee. Stop suggestion uses straight-line distances.</p>
+    </div>
+    <div class="v9-card"><h2>💾 Owner Private Route Plans</h2><label>Route plan name<input id="v9PlanTitle" maxlength="90" placeholder="Morning multi-shop pickup"></label>
+     <div class="v9-map-actions"><button id="v9PlanSave" type="button" class="v9-primary">Save Private Plan</button></div>
+     <label>Saved Plans<select id="v9PlansSelect"><option value="">Select a saved route</option></select></label>
+     <div class="v9-map-actions"><button id="v9PlanOpen" type="button" class="v9-secondary">Open Plan</button><button id="v9PlansReload" type="button" class="v9-button-small">↻ Refresh</button></div>
+    </div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="tracking" class="page v9-map-shell" aria-label="Private order live tracking">
+ <div class="v9-hero"><div><small>✦ CUSTOMER PRIVATE TRACKING</small><h1>🛵 My Delivery Map</h1><p>Your delivery destination and, if USE ME Owner explicitly opts in for your order, a temporary Owner live GPS marker — all inside this website.</p></div><span class="v9-hero-icon">📍</span></div>
+ <div class="v9-map-top-nav"><a href="/orders" class="v9-owner-dashboard-link">← My Orders</a><a href="/map" class="v9-owner-dashboard-link">My Saved Places</a></div>
+ <div class="v9-tracking-layout">
+  <div class="v9-card v9-main-map-card">
+   <div class="v9-section-header"><h2>Private Delivery Map</h2><button id="v9TrackingRefresh" type="button" class="v9-secondary">↻ Refresh</button></div>
+   <div class="v9-map-wrap"><div id="v9TrackingMap" class="v9-map-canvas" role="application" aria-label="Private order owner tracking map"></div></div>
+   <p id="v9TrackingInfo" class="v9-map-status" role="status">Select your own order to see delivery location data.</p>
+  </div>
+  <div class="v9-card">
+   <h2>🔐 Choose My Order</h2>
+   <label>My Orders<select id="v9TrackingOrderSelect"><option value="">Loading your orders…</option></select></label>
+   <p id="v9TrackingState" class="v9-note v9-privacy">Only the authenticated Customer can read their own order and fresh Owner-sharing data.</p>
+   <p class="v9-muted">Map refreshes every 12 seconds while the page is open. Live GPS stops appearing if the Owner stops sharing, the session becomes stale or the order is finished.</p>
+   <p class="v9-note v9-warning">OpenStreetMap tiles provide the map. Dotted lines indicate approximate locations, not drivable roads. Real GPS availability depends on mobile device and permission.</p>
+   <a href="/orders" class="v9-owner-dashboard-link">📋 Full Order Timeline</a>
+  </div>
+ </div>
+</section>
