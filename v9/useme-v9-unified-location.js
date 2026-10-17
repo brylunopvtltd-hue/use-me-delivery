@@ -10,7 +10,7 @@ const db=()=>typeof usemeDb==='undefined'?null:usemeDb;
 const KEY='useme_v9_location_current_';
 const UUID=/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 let active=null,principal='guest',isOwner=false,loading=false,chooser=null,leafletMap=null,leafletMarker=null;
-let pending=null,savedPlaces=[],ownerBase=null,initComplete=false,applySignature='',savePending=false;
+let pending=null,mapCandidate=null,savedPlaces=[],ownerBase=null,initComplete=false,applySignature='',savePending=false;
 const text=(id,v)=>{const x=$(id);if(x)x.textContent=String(v)};
 const node=(tag,cls,str)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(str!==undefined)x.textContent=String(str);return x};
 const btn=(str,action,cls)=>{const x=node('button',cls||'useme-loc-btn',str);x.type='button';x.addEventListener('click',action);return x};
@@ -33,6 +33,9 @@ function render(){
  if(label)label.textContent=active?locationDisplay(active):'Location not selected';
  if(button){button.textContent=active?'Change Location':'Set My Location';button.setAttribute('aria-label',active?'Change saved delivery location':'Choose your one-time delivery location')}
  if(badge)badge.textContent=active?'✓ Saved location':'GPS permission optional';
+ document.querySelectorAll('button[onclick*="usemeCaptureLocation"]').forEach(x=>{
+  x.textContent=active?'◎ Use saved USE ME location':'◎ Set one-time USE ME location';
+ });
  text('usemeLocCurrent',active?locationDisplay(active)+' · '+active.lat.toFixed(5)+', '+active.lng.toFixed(5)+' · '+(active.source==='gps'?'GPS':'Selected map pin'):'Not selected. Choose once, then reuse on all USE ME pages.');
  const clear=$('usemeLocClear');if(clear)clear.disabled=!active;
  const ownerArea=$('usemeLocOwnerArea');if(ownerArea)ownerArea.hidden=!isOwner;
@@ -50,6 +53,7 @@ function inform(msg){
 }
 function notifyCurrent(){
  window.dispatchEvent(new CustomEvent('useme:preferred-location-changed',{detail:{location:active?{...active}:null}}));
+ if(active&&$('map')?.classList.contains('active'))window.usemeV9Maps?.showSaved?.(active);
  applyToPage(true);
  render();
 }
@@ -347,6 +351,18 @@ function expose(){
 }
 function init(){
  expose();
+ window.addEventListener('useme:v9-pin-selected',event=>{
+  const p=event.detail;if(valid(p)){mapCandidate={lat:round(p.lat),lng:round(p.lng),accuracy:0,source:'map'};
+   text('usemeLocMapChoiceStatus','New map pin selected. Press “Use this Pin Across USE ME” to save it.');
+  }
+ });
+ $('usemeLocMapUseButton')?.addEventListener('click',async()=>{
+  const p=mapCandidate||window.usemePreferredLocationCurrent?.();
+  if(!p||!valid(p)){text('usemeLocMapChoiceStatus','First tap on the map or choose GPS above.');return}
+  await persistLocation({...p,label:($('v9PlaceLabel')?.value||'My Location'),address:($('v9PlaceAddress')?.value||''),source:p.source||'map'});
+  text('usemeLocMapChoiceStatus','✓ This destination is now saved across all USE ME pages.');
+ });
+
  const bar=$('usemeGlobalLocationBar');
  if(bar){
   const badge=node('span','useme-loc-badge');badge.id='usemeLocBadge';
