@@ -34,7 +34,7 @@ function navigate(path){
  if(typeof window.go==='function'&&map[root])window.go(map[root],{url:path});
  else location.href=path;
 }
-const action=(campaign,label)=>btn(label||campaign.cta_label||'Explore now',()=>navigate(campaign.link_path),'useme-campaign-cta');
+const action=(campaign,label)=>btn(label||campaign.cta_label||'Explore now',()=>{if($('usemePromoPopup'))$('usemePromoPopup').hidden=true;navigate(campaign.link_path)},'useme-campaign-cta');
 function setMessage(id,message){const x=$(id);if(x)x.textContent=message}
 function clearTimers(){timers.forEach(clearInterval);timers=[];if(popupTimer){clearTimeout(popupTimer);popupTimer=null}}
 function get(kind,slot){return promos.filter(p=>p.kind===kind&&live(p)&&p.slots&&p.slots.includes(slot))}
@@ -201,8 +201,10 @@ async function claimAll(rows){
 function renderTrending(){
  const root=$('usemePromoTrending');if(!root)return;root.replaceChildren();
  if(!allProducts.length){root.classList.add('hidden');return}root.classList.remove('hidden');
+ let preferred='';try{preferred=sessionStorage.getItem('useme_recent_category')||''}catch(e){}
+ const recommendations=[...allProducts].sort((a,b)=>(a.category===preferred?0:1)-(b.category===preferred?0:1));
  const header=el('div','useme-promo-heading');header.append(el('h2','','🛍️ Fresh from local shops'),el('p','','Recently listed real products · actual prices'));
- const grid=el('div','useme-promo-product-grid');allProducts.slice(0,6).forEach(p=>grid.append(cardForProduct(p)));
+ const grid=el('div','useme-promo-product-grid');recommendations.slice(0,6).forEach(p=>grid.append(cardForProduct(p)));
  root.append(header,grid);
 }
 function productBadges(){
@@ -436,6 +438,9 @@ function start(){
  $('usemePromoPopupClose')?.addEventListener('click',()=>{$('usemePromoPopup').hidden=true});
  $('usemePromoPopup')?.addEventListener('click',e=>{if(e.target===$('usemePromoPopup'))e.currentTarget.hidden=true});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('usemeQuickOverlay'))$('usemeQuickOverlay').hidden=true;if($('usemePromoPopup'))$('usemePromoPopup').hidden=true}});
+ const homeForm=$('usemePromoHomeSearch');
+ homeForm?.addEventListener('submit',e=>{e.preventDefault();const value=$('usemePromoHomeSearchInput')?.value||'';navigate('/shop');const input=$('search');if(input){input.value=value;if(typeof filterCategories==='function')filterCategories()}});
+ $('categories')?.addEventListener('click',e=>{const b=e.target.closest('button[data-category]');if(!b)return;try{sessionStorage.setItem('useme_recent_category',b.dataset.category==='All'?'':b.dataset.category)}catch(_){} });
  attachOwner();attachQuickObserver();
  if(db()){loadPublic().catch(e=>console.warn('Promotions unavailable:',e));if(!pollingTimer)pollingTimer=setInterval(()=>{if(!document.hidden)loadPublic()},60000);
   db().auth.onAuthStateChange(()=>setTimeout(()=>{loadClaims().then(()=>{renderCoupons('usemePromoHomeCoupons','home');renderCoupons('usemePromoShopCoupons','shop')})},100));
