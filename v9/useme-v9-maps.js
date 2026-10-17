@@ -10,12 +10,12 @@ const dom=(name,cls,txt)=>{const e=document.createElement(name);if(cls)e.classNa
 const action=(label,fn,cls)=>{const e=dom('button',cls||'v9-button',label);e.type='button';e.addEventListener('click',fn);return e};
 const info=(id,msg)=>{const e=$(id);if(e)e.textContent=msg};
 const isUUID=v=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v||''));
-const validCoord=(lat,lng)=>Number.isFinite(Number(lat))&&Number.isFinite(Number(lng))&&Math.abs(Number(lat))<=90&&Math.abs(Number(lng))<=180;
+const validCoord=(lat,lng)=>lat!==null&&lat!==undefined&&lat!==''&&lng!==null&&lng!==undefined&&lng!==''&&Number.isFinite(Number(lat))&&Number.isFinite(Number(lng))&&Math.abs(Number(lat))<=90&&Math.abs(Number(lng))<=180;
 const six=n=>Math.round(Number(n)*1e6)/1e6;
 const point=(lat,lng,label,kind,orderId)=>({lat:six(lat),lng:six(lng),label:String(label||'Map pin').slice(0,100),kind:kind||'manual',orderId:orderId||null});
 const km=(p,q)=>{const toRad=Math.PI/180,R=6371;const dlat=(q.lat-p.lat)*toRad,dlon=(q.lng-p.lng)*toRad;const a=Math.sin(dlat/2)**2+Math.cos(p.lat*toRad)*Math.cos(q.lat*toRad)*Math.sin(dlon/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))};
 let mapPromise=null,maps={},layers={},publicPosition=null,manualPoint=null,selectedPoint=null,ownerOrders=[],ownerShops=new Map(),ownerPickup=new Map(),selectedOrder=null;
-let stops=[],routeLayer=null,sharingOrder=null,gpsWatch=null,lastPublishedAt=0,lastLocation=null,sessionStart=0,trackingInterval=null,sharingBusy=false,routePlans=[];
+let stops=[],routeLayer=null,sharingOrder=null,gpsWatch=null,shareHeartbeat=null,lastPublishedAt=0,lastLocation=null,sessionStart=0,trackingInterval=null,sharingBusy=false,routePlans=[];
 const iconColors={shop:'#1677c9',customer:'#f68c24',owner:'#0ba575',manual:'#6455c5',private:'#405a90'};
 const iconGlyphs={shop:'🏪',customer:'🏠',owner:'🛵',manual:'📍',private:'📌'};
 const haveMap=async()=>{
@@ -278,8 +278,9 @@ async function savePlan(){
  info('v9OwnerStatus',r.error?'Could not save route: '+r.error.message:'✓ Route plan saved privately to Owner account; not available to shops/customers.');
  if(!r.error)loadPlans();
 }
-function startShare(){
+async function startShare(){
  if(sharingBusy||sharingOrder)return;
+ if(!await ownerAuth())return info('v9LiveStatus','Verified Owner login required for live GPS sharing.');
  if(!selectedOrder||selectedOrder.status!=='out_for_delivery'){
   info('v9LiveStatus','Choose an order marked Out for Delivery to share Owner live GPS.');return;
  }
@@ -292,24 +293,14 @@ function startShare(){
  $('v9ShareButton').textContent='■ Stop Sharing Live GPS';
  $('v9ShareButton').classList.add('v9-stop-sharing');
  info('v9LiveStatus','Requesting phone location... No coordinates sent before your browser permits GPS.');
+ shareHeartbeat=setInterval(()=>{if(!sharingOrder)return;if(Date.now()-sessionStart>30*60*1000){stopShare();return}if(lastLocation&&Date.now()-lastPublishedAt>20000&&!sharingBusy)publishLocation(lastLocation,orderId)},20000);
  gpsWatch=navigator.geolocation.watchPosition(async raw=>{
   if(sharingOrder!==orderId||Date.now()-sessionStart>30*60*1000){await stopShare();return}
   const coords=raw.coords;
   const p={lat:six(coords.latitude),lng:six(coords.longitude),accuracy:Math.min(100000,Math.max(0,Math.round(coords.accuracy||0))),
     heading:Number.isFinite(coords.heading)?coords.heading:null,speed:Number.isFinite(coords.speed)?coords.speed:null};
   lastLocation=p;
-  if(Date.now()-lastPublishedAt>10000){
-   lastPublishedAt=Date.now();
-   const ret=await db().rpc('useme_v9_publish_owner_location',{
-    p_order_id:orderId,p_lat:p.lat,p_lng:p.lng,p_accuracy_m:p.accuracy,p_heading:p.heading,p_speed:p.speed
-   });
-   if(ret.error){
-    info('v9LiveStatus','Location sharing refused: '+ret.error.message);
-    await stopShare();
-    return;
-   }
-   info('v9LiveStatus','● Sharing for selected order only · GPS accuracy ±'+Math.round(p.accuracy)+' m · last updated '+new Date().toLocaleTimeString()+'. Automatic 30-minute limit.');
-  }
+  if(Date.now()-lastPublishedAt>10000)await publishLocation(p,orderId);
   paintOwnerMap();
  },async error=>{
   info('v9LiveStatus',error.code===1?'GPS permission denied; sharing stopped.':'GPS error: '+error.message+'; sharing stopped.');
@@ -317,7 +308,20 @@ function startShare(){
  },{enableHighAccuracy:true,maximumAge:0,timeout:25000});
  sharingBusy=false;
 }
+async function publishLocation(p,orderId){
+ if(sharingOrder!==orderId||!p||sharingBusy)return;
+ sharingBusy=true;
+ try{
+  const ret=await db().rpc('useme_v9_publish_owner_location',{
+   p_order_id:orderId,p_lat:p.lat,p_lng:p.lng,p_accuracy_m:p.accuracy,p_heading:p.heading,p_speed:p.speed
+  });
+  if(ret.error){info('v9LiveStatus','Live sharing refused: '+ret.error.message);await stopShare();return}
+  lastPublishedAt=Date.now();
+  info('v9LiveStatus','● Live GPS ON for selected order only · GPS accuracy ±'+Math.round(p.accuracy)+' m · refreshed '+new Date().toLocaleTimeString()+'. Stops automatically within 30 minutes.');
+ }finally{sharingBusy=false}
+}
 async function stopShare(){
+ if(shareHeartbeat!==null){clearInterval(shareHeartbeat);shareHeartbeat=null}
  if(gpsWatch!==null&&navigator.geolocation){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null}
  const old=sharingOrder;sharingOrder=null;sharingBusy=false;lastPublishedAt=0;lastLocation=null;
  if($('v9ShareButton')){$('v9ShareButton').textContent='▶ Start Live GPS Sharing';$('v9ShareButton').classList.remove('v9-stop-sharing')}
@@ -414,7 +418,7 @@ function install(){
   if(root)new MutationObserver(()=>{if(root.classList.contains('active'))fn();else watchLeave()}).observe(root,{attributes:true,attributeFilter:['class']});
  }
  document.addEventListener('visibilitychange',watchLeave);
- window.addEventListener('pagehide',()=>{if(gpsWatch!==null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null}if(sharingOrder){db()?.rpc('useme_v9_stop_owner_location',{p_order_id:sharingOrder}).catch(()=>{});sharingOrder=null}stopTracking()});
+ window.addEventListener('pagehide',()=>{if(shareHeartbeat!==null){clearInterval(shareHeartbeat);shareHeartbeat=null}if(gpsWatch!==null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null}if(sharingOrder){db()?.rpc('useme_v9_stop_owner_location',{p_order_id:sharingOrder}).catch(()=>{});sharingOrder=null}stopTracking()});
  window.addEventListener('popstate',()=>setTimeout(watchLeave,0));
  renderStops();
  if($('map')?.classList.contains('active'))initMap('v9PublicMap',{pick:true,status:'v9PublicStatus'}).then(loadSavedPlaces);
