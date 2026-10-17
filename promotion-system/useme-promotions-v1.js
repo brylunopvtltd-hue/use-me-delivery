@@ -44,7 +44,7 @@ function createSlide(p){
  const media=el('div','useme-campaign-media');
  const url=imageURL(p.image_path);
  if(url){const img=el('img');img.src=url;img.alt='';img.loading='lazy';media.append(img)}
- else{const mark=el('span','useme-campaign-symbol','✦');mark.setAttribute('aria-hidden','true');media.append(mark)}
+ else{const img=el('img');img.alt='';img.loading='lazy';img.src=p.link_path?.startsWith('/send')?'/assets/send.svg':p.link_path?.includes('Beauty')?'/assets/useme-reference.svg#beauty':'/assets/buy.svg';media.append(img)}
  const copy=el('div','useme-campaign-copy');
  copy.append(el('span','useme-campaign-badge',p.kind==='ad'?'Sponsored · '+p.sponsor:(p.badge||'USE ME SPECIAL')));
  copy.append(el('h2','',p.title),el('p','',p.subtitle||'Browse verified USE ME products and services.'));
