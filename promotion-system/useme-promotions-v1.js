@@ -16,6 +16,8 @@ const productURL=p=>{
  if(!p||!p.image_path||typeof productImageUrl!=='function')return '';
  try{return productImageUrl(p.image_path)||''}catch(e){return ''}
 };
+const approvedHostedImage=uri=>typeof uri==='string'&&/^https:\/\/usemeservice[.]wordpress[.]com\/wp-content\/uploads\/[0-9]{4}\/[0-9]{2}\/use-me-[a-z0-9-]+[.](png|jpg|jpeg|webp)$/.test(uri);
+const highResImage=(uri,width=1200)=>approvedHostedImage(uri)?uri+'?w='+width:uri;
 const imageURL=path=>{
  if(!path||!/^campaigns\/[0-9a-f-]{36}\.(jpg|jpeg|png|webp)$/i.test(path)||!db())return '';
  try{return db().storage.from('useme-campaign-images').getPublicUrl(path).data.publicUrl||''}catch(e){return ''}
@@ -42,9 +44,25 @@ function createSlide(p){
  const slide=el('article','useme-campaign-slide kind-'+p.kind);
  slide.setAttribute('aria-label',p.title);
  const media=el('div','useme-campaign-media');
- const url=imageURL(p.image_path);
- if(url){const img=el('img');img.src=url;img.alt='';img.loading='lazy';media.append(img)}
- else{const img=el('img');img.alt='';img.loading='lazy';img.src=p.link_path?.startsWith('/send')?'/assets/send.svg':p.link_path?.includes('Beauty')?'/assets/useme-reference.svg#beauty':'/assets/buy.svg';media.append(img)}
+ const storageImage=imageURL(p.image_path);
+ const hostedImage=approvedHostedImage(p.external_image_url)?p.external_image_url:'';
+ const fullImage=!storageImage&&!!hostedImage;
+ const url=storageImage||hostedImage;
+ if(url){
+  const img=el('img');img.src=fullImage?highResImage(url,1200):url;img.alt='';img.loading=p.priority<=10?'eager':'lazy';
+  if(fullImage){img.srcset=[640,960,1440].map(w=>highResImage(url,w)+' '+w+'w').join(', ');img.sizes='(max-width: 720px) 100vw, 1120px';}
+  media.append(img);
+ }else{
+  const img=el('img');img.alt='';img.loading='lazy';img.src=p.link_path?.startsWith('/send')?'/assets/send.svg':p.link_path?.includes('Beauty')?'/assets/useme-reference.svg#beauty':'/assets/buy.svg';media.append(img);
+ }
+ if(fullImage){
+  slide.classList.add('useme-campaign-fullart');
+  const tap=action(p,p.cta_label);
+  tap.classList.add('useme-campaign-image-link');tap.setAttribute('aria-label',p.title+' — '+(p.cta_label||'Explore'));
+  slide.append(media,tap);
+  if(p.kind==='ad')slide.append(el('span','useme-campaign-fullart-sponsor','Sponsored · '+p.sponsor));
+  return slide;
+ }
  const copy=el('div','useme-campaign-copy');
  copy.append(el('span','useme-campaign-badge',p.kind==='ad'?'Sponsored · '+p.sponsor:(p.badge||'USE ME SPECIAL')));
  copy.append(el('h2','',p.title),el('p','',p.subtitle||'Browse verified USE ME products and services.'));
