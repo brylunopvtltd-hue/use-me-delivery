@@ -21,12 +21,10 @@ function navigate(path){
 }
 async function loadCatalog(){
  if(!db())return [];
- const s=await db().from('shops').select('id,name,status').eq('status','approved').limit(180);
- if(s.error)return[];
- shops=s.data||[];shopById=new Map(shops.map(v=>[v.id,v.name]));
- if(!shops.length){catalog=[];return[]}
- const r=await db().from('products').select('id,shop_id,name,category,description,price_lkr,stock,active,image_path').eq('active',true).in('shop_id',shops.map(x=>x.id)).limit(400);
- catalog=(r.data||[]).filter(p=>shopById.has(p.shop_id)).map(p=>({...p,shop_name:shopById.get(p.shop_id)}));return catalog;
+ const s=await db().from('shops').select('id,name,status').eq('status','approved').order('name',{ascending:true}).limit(180);
+ if(s.error){shops=[];shopById=new Map();catalog=[];return []}
+ shops=s.data||[];shopById=new Map(shops.map(v=>[v.id,v.name]));catalog=[];
+ return [];
 }
 function photoOf(p){
  try{return typeof productImageUrl==='function'?productImageUrl(p.image_path):null}catch(e){return null}
@@ -57,26 +55,90 @@ function card(p,withCompare=false){
  }
  article.append(imageLink,body);return article;
 }
-function renderSearch(){
- const root=$('v9SearchResults');if(!root)return;root.replaceChildren();
- const q=($('v9SearchInput')?.value||new URLSearchParams(location.search).get('q')||'').toLowerCase().trim();
+let usemeSearchGeneration=0;
+async function renderSearch(){
+ const root=$('v9SearchResults');if(!root||!db())return;
+ const generation=++usemeSearchGeneration;
+ root.replaceChildren();
+ const raw=($('v9SearchInput')?.value||new URLSearchParams(location.search).get('q')||'').trim();
+ const query=raw.replace(/[%,()."*\\]/g,'').slice(0,80).trim();
  const category=$('v9SearchCategory')?.value||'All';
  const max=Number($('v9SearchMaxPrice')?.value||0);
  const order=$('v9SearchSort')?.value||'popular';
- const selected=catalog.filter(p=>(!q||[p.name,p.description,p.shop_name,p.category].some(s=>String(s||'').toLowerCase().includes(q)))
- &&(category==='All'||p.category===category)&&(max<=0||Number(p.price_lkr)<=max));
- if(order==='low')selected.sort((a,b)=>Number(a.price_lkr)-Number(b.price_lkr));
- else if(order==='high')selected.sort((a,b)=>Number(b.price_lkr)-Number(a.price_lkr));
- else selected.sort((a,b)=>(b.stock>0?1:0)-(a.stock>0?1:0));
- safeStatus('v9SearchStatus',selected.length+' verified products match your filters. Prices and stock come from actual local shops.');
- if(!selected.length){root.append(elem('p','v9c-muted','No published products match those filters. Try a new search.'));return}
- const grid=elem('div','v9c-grid');selected.forEach(p=>grid.append(card(p,true)));root.append(grid);
+ if(raw&&(!query||!shops.length)){
+  safeStatus('v9SearchStatus','Search unavailable or query needs letters or numbers.');
+  return;
+ }
+ if(!shops.length){
+  safeStatus('v9SearchStatus','No approved shops to search.');
+  root.append(elem('p','v9c-muted','No approved shop products yet.'));
+  return;
+ }
+ let offset=0,loading=false,total=null;
+ const pageSize=40;
+ const grid=elem('div','v9c-grid');
+ root.append(grid);
+ catalog=[];compareSet.clear();
+ safeStatus('v9CompareCount','0 selected for comparison');
+ async function nextPage(){
+  if(loading||generation!==usemeSearchGeneration)return;
+  loading=true;
+  const previous=root.querySelector('[data-useme-search-more]');
+  if(previous)previous.remove();
+  safeStatus('v9SearchStatus',offset?'Loading more products...':'Searching verified shop products...');
+  try{
+   let q=db().from('products')
+    .select('id,shop_id,name,category,description,price_lkr,stock,active,image_path',{count:'exact'})
+    .eq('active',true).in('shop_id',shops.map(s=>s.id));
+   if(query){
+    const matched=shops.filter(s=>s.name.toLowerCase().includes(query.toLowerCase())).slice(0,60).map(s=>s.id);
+    const options=['name.ilike.%'+query+'%','description.ilike.%'+query+'%','category.ilike.%'+query+'%'];
+    if(matched.length)options.push('shop_id.in.('+matched.join(',')+')');
+    q=q.or(options.join(','));
+   }
+   if(category!=='All')q=q.eq('category',category);
+   if(Number.isFinite(max)&&max>0)q=q.lte('price_lkr',max);
+   if(order==='low'||order==='high')q=q.order('price_lkr',{ascending:order==='low'});
+   else q=q.order('stock',{ascending:false});
+   q=q.order('id',{ascending:true}).range(offset,offset+pageSize-1);
+   const {data,error,count}=await q;
+   if(generation!==usemeSearchGeneration)return;
+   if(error)throw error;
+   const page=(data||[]).filter(p=>shopById.has(p.shop_id));
+   page.forEach(p=>{
+    const enhanced={...p,shop_name:shopById.get(p.shop_id)};
+    catalog.push(enhanced);
+    grid.append(card(enhanced,true));
+   });
+   offset+=(data||[]).length;
+   total=typeof count==='number'?count:total;
+   fillSearchCategories();
+   const shown=grid.children.length;
+   safeStatus('v9SearchStatus',shown+' of '+(total??'available')+' verified products loaded. Prices and stock are from approved shops.');
+   if(!shown)root.append(elem('p','v9c-muted','No published products match those filters. Try a new search.'));
+   if((data||[]).length===pageSize&&(total===null||offset<total)){
+    const more=button('Load more products',nextPage,'v9c-btn');
+    more.dataset.usemeSearchMore='true';
+    root.append(more);
+   }
+  }catch(error){
+   if(generation!==usemeSearchGeneration)return;
+   safeStatus('v9SearchStatus','Search unavailable: '+(error.message||'Network issue'));
+   const retry=button('Retry search',nextPage,'v9c-btn');
+   retry.dataset.usemeSearchMore='true';
+   root.append(retry);
+  }finally{loading=false}
+ }
+ await nextPage();
 }
 function fillSearchCategories(){
  const sel=$('v9SearchCategory');if(!sel)return;
- const keep=sel.value;sel.replaceChildren();
+ const keep=sel.value;
+ const categories=new Set(['Groceries','Fashion','Beauty','Electronics','Home','Health','Baby','Books','Sports','Pets','Automotive']);
+ catalog.forEach(p=>{if(p.category)categories.add(p.category)});
+ sel.replaceChildren();
  const all=elem('option','','All categories');all.value='All';sel.append(all);
- [...new Set(catalog.map(p=>p.category).filter(Boolean))].sort().forEach(c=>{const o=elem('option','',c);o.value=c;sel.append(o)});
+ [...categories].sort().forEach(c=>{const option=elem('option','',c);option.value=c;sel.append(option)});
  if([...sel.options].some(x=>x.value===keep))sel.value=keep;
 }
 async function openSearch(){
