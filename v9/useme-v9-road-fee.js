@@ -115,6 +115,10 @@ function getGPS(){
 }
 async function capture(scope){
  boxText(scope,'Requesting GPS permission — your location will be used for pricing only after you allow it.');
+ if(scope!=='map'&&typeof window.usemeCaptureLocation==='function'){
+  await window.usemeCaptureLocation(scope); // Existing order checkout GPS draft is updated too.
+  return;
+ }
  try{setPin(scope,await getGPS())}
  catch(e){resetQuote(scope,e?.code===1?'Location permission denied. You may choose a destination on the map or request a manual quote.':limit(e.message||'GPS unavailable'))}
 }
@@ -137,6 +141,7 @@ async function toggleWatch(scope){
   const last=currentPin(scope);
   // Avoid sending extra position updates for tiny GPS drift or repeated fixes.
   if(last&&Math.abs(fresh.lat-last.lat)<.00045&&Math.abs(fresh.lng-last.lng)<.00045)return;
+  if(scope!=='map'&&typeof window.usemeSetDeliveryDraftFromLiveGPS==='function')window.usemeSetDeliveryDraftFromLiveGPS(scope,fresh);
   setPin(scope,fresh,Date.now()-lastRequote>=12500);
  },err=>{stopWatching(false);boxText(scope,err.code===1?'GPS permission denied; live updates stopped.':'GPS temporarily unavailable; live updates stopped.')},{enableHighAccuracy:true,maximumAge:0,timeout:23000});
 }
@@ -210,7 +215,10 @@ function start(){
   $('usemeRoadCapture_'+scope)?.addEventListener('click',()=>capture(scope));
   $('usemeRoadRecalc_'+scope)?.addEventListener('click',()=>currentPin(scope)?requestQuote(scope,currentPin(scope)):capture(scope));
   $('usemeRoadWatch_'+scope)?.addEventListener('click',()=>toggleWatch(scope));
-  $('usemeRoadForget_'+scope)?.addEventListener('click',()=>forget(scope));
+  $('usemeRoadForget_'+scope)?.addEventListener('click',()=>{
+   if(scope!=='map'&&typeof window.usemeForgetDraftLocation==='function')window.usemeForgetDraftLocation(scope);
+   else forget(scope);
+  });
  }
  $('usemeOwnerRateStart')?.addEventListener('click',quoteOwnerStart);
  $('usemeOwnerRateStop')?.addEventListener('click',stopOwnerOrigin);
