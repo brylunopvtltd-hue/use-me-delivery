@@ -40,6 +40,7 @@ function render(){
  const baseButton=$('usemeLocSetOwnerBase');if(baseButton)baseButton.hidden=!isOwner;
  const clearBase=$('usemeLocRemoveOwnerBase');if(clearBase)clearBase.hidden=!isOwner;
  const baseNote=$('usemeLocOwnerBaseStatus');if(baseNote&&isOwner)baseNote.textContent=ownerBase?'✓ Owner dispatch base saved. It stays fixed until you change or remove it. This is NOT your live GPS.':'No owner dispatch base saved. Select your USE ME dispatch base once for automatic road quotes.';
+ const quickNote=$('usemeLocOwnerBaseQuickStatus');if(quickNote&&isOwner)quickNote.textContent=ownerBase?'✓ Fixed pricing base: '+ownerBase.label+' · '+new Date(ownerBase.updated_at).toLocaleDateString('en-LK')+'. No repeated GPS permission required.':'No fixed dispatch base selected yet. Choose a location once, then Save Dispatch Base here.';
  const status=$('usemeLocGlobalStatus');
  if(status&&initComplete)status.textContent=active?'Selected for USE ME Shop, Cart, Orders, Delivery and Maps. Change it whenever you need.':'Choose a location to use it across USE ME.';
 }
@@ -73,6 +74,7 @@ async function loadAccount(){
  loading=true;
  try{
   const u=await user(),next=u?.id||'guest';
+  const previousGuest=principal==='guest'&&active?{...active}:null;
   const change=next!==principal;
   principal=next;
   const cached=readLocal(next);
@@ -87,8 +89,9 @@ async function loadAccount(){
    }else if(!resp.error&&!resp.data&&!cached){
     // A guest pin chosen before sign-in belongs to this same browser. Adopt it only for
     // the first account with no existing preference, rather than asking GPS again.
-    const guest=readLocal('guest');
-    if(guest)selected=guest;
+    // Adopt a guest pin only when this SAME open page already selected it;
+    // do not import an older guest location into an unrelated account.
+    if(previousGuest)selected=previousGuest;
    }
    if(selected&&!resp.error&&!resp.data){
     await db().from('useme_v9_preferred_locations').upsert({
