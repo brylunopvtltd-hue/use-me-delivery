@@ -398,9 +398,39 @@ async function refreshTracking(){
  trackingInterval=setInterval(draw,12000);
 }
 function stopTracking(){if(trackingInterval){clearInterval(trackingInterval);trackingInterval=null}}
+function estimateOwnerFee(){
+ const roundTripKm=Number($('v9RoundTripKm')?.value),roadExtra=Number($('v9RoadExtra')?.value||0);
+ if(!Number.isFinite(roundTripKm)||roundTripKm<=0||roundTripKm>1500||!Number.isFinite(roadExtra)||roadExtra<0||roadExtra>100000){
+  info('v9FeeResult','Enter a valid total round-trip distance and an optional nonnegative LKR road-condition surcharge.');return;
+ }
+ const fee=typeof usemeCalculateFee==='function'?usemeCalculateFee(roundTripKm,roadExtra):Math.round(Math.max(250,(750/22)*roundTripKm+roadExtra));
+ const fuelReference=Math.round((200/22)*roundTripKm);
+ info('v9FeeResult','Indicative bike delivery fee LKR '+Number(fee).toLocaleString('en-LK')+
+ ' · Historic fuel baseline estimate LKR '+fuelReference.toLocaleString('en-LK')+
+ '. Based on total round-trip '+roundTripKm.toFixed(1)+' km. Owner must confirm actual road conditions, fuel, pickup stops and final customer quote; this is NOT an automatic charge or net profit.');
+}
+function showFullscreen(mapId){
+ const canvas=$(mapId),container=canvas?.closest('.v9-map-wrap');
+ if(!container)return;
+ if(container.classList.contains('v9-fullscreen'))return hideFullscreen();
+ document.querySelectorAll('.v9-map-wrap.v9-fullscreen').forEach(c=>c.classList.remove('v9-fullscreen'));
+ container.classList.add('v9-fullscreen');document.body.classList.add('useme-v9-map-fullscreen');
+ const close=action('× Exit Fullscreen Map',hideFullscreen,'v9-map-fullscreen-exit');
+ close.id='v9MapExitFull';container.append(close);
+ setTimeout(()=>maps[mapId]?.invalidateSize(),150);
+}
+function hideFullscreen(){
+ document.querySelectorAll('.v9-map-wrap.v9-fullscreen').forEach(c=>{c.classList.remove('v9-fullscreen');c.querySelector('.v9-map-fullscreen-exit')?.remove()});
+ document.body.classList.remove('useme-v9-map-fullscreen');
+ Object.values(maps).forEach(m=>setTimeout(()=>m.invalidateSize(),150));
+}
 function install(){
  const jump=(id,fn)=>$(id)?.addEventListener('click',fn);
  jump('v9LocateMe',locateManual);jump('v9SavePlace',savePlace);jump('v9RefreshPlaces',loadSavedPlaces);
+ jump('v9PublicFullMap',()=>showFullscreen('v9PublicMap'));
+ jump('v9OwnerFullMap',()=>showFullscreen('v9OwnerMap'));
+ jump('v9TrackFullMap',()=>showFullscreen('v9TrackingMap'));
+ jump('v9EstimateFee',estimateOwnerFee);
  jump('v9OwnerRefresh',()=>{if(sharingOrder)return info('v9OwnerStatus','Stop GPS sharing before refreshing orders.');loadDispatch()});
  jump('v9OwnerShowOrder',()=>selectOwnerOrder($('v9OwnerOrderSelect').value));
  jump('v9AddSelectedPickup',()=>{const o=ownerOrders.find(x=>x.id===$('v9OwnerOrderSelect').value);if(o)addShopStop(o)});
@@ -418,6 +448,7 @@ function install(){
   if(root)new MutationObserver(()=>{if(root.classList.contains('active'))fn();else watchLeave()}).observe(root,{attributes:true,attributeFilter:['class']});
  }
  document.addEventListener('visibilitychange',watchLeave);
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')hideFullscreen()});
  window.addEventListener('pagehide',()=>{if(shareHeartbeat!==null){clearInterval(shareHeartbeat);shareHeartbeat=null}if(gpsWatch!==null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null}if(sharingOrder){db()?.rpc('useme_v9_stop_owner_location',{p_order_id:sharingOrder}).catch(()=>{});sharingOrder=null}stopTracking()});
  window.addEventListener('popstate',()=>setTimeout(watchLeave,0));
  renderStops();
