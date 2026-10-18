@@ -1,0 +1,30 @@
+name: USE ME Product Image URL Diagnostics
+on:
+  push:
+    branches: [feature/free-product-scale-phase1]
+    paths: [".github/workflows/useme-image-diagnostics.yml"]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Test original external images
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.error
+          urls=[
+          'https://m.media-amazon.com/images/I/41UbPFLOVkL._SY445_SX342_QL70_FMwebp_.jpg',
+          'https://m.media-amazon.com/images/I/41UbPFLOVkL.jpg',
+          'https://m.media-amazon.com/images/I/81uv+cHAxxL._AC_SY300_SX300_.jpg',
+          'https://m.media-amazon.com/images/I/81uv+cHAxxL.jpg'
+          ]
+          for u in urls:
+            try:
+              req=urllib.request.Request(u,headers={'User-Agent':'Mozilla/5.0 (compatible; Product QA/1.0)'})
+              with urllib.request.urlopen(req,timeout=13) as rsp:
+                print('photo',u.split('/')[-1], 'status',rsp.status,'mime',rsp.headers.get('content-type'),'length',rsp.headers.get('content-length'),'first-bytes',len(rsp.read(128)))
+            except Exception as e:print('photo',u.split('/')[-1],'FAILED',type(e).__name__,str(e)[:160])
+          PY
