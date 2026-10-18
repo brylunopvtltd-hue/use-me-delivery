@@ -1,0 +1,48 @@
+name: USE ME Live Compact Grid Regression
+on:
+  push:
+    branches: [feature/free-product-scale-phase1]
+    paths: [".github/workflows/useme-daraz-live-regression.yml"]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-save playwright@1.56.1
+      - run: npx playwright install chromium
+      - name: Verify direct live CSS/JS at mobile screen sizes
+        run: |
+          node --input-type=module <<'JS'
+          import {chromium} from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          for(const width of [360,390,520]){
+            const page=await browser.newPage({viewport:{width,height:844},isMobile:true});
+            const errors=[];page.on('pageerror',e=>errors.push(e.message));
+            const r=await page.goto('https://use-me-superapp-web.bryluno-zunora.workers.dev/shop?darazv10=20261018',{waitUntil:'domcontentloaded',timeout:50000});
+            await page.waitForSelector('#liveProducts .v3-product-card',{timeout:30000});
+            await page.waitForSelector('#usemeGridDensity',{timeout:10000});
+            const data=await page.evaluate(()=>{
+              const g=document.querySelector('#liveProducts'),card=g.querySelector('.v3-product-card');
+              return {cols:getComputedStyle(g).gridTemplateColumns.split(' ').length,cards:g.querySelectorAll('.v3-product-card').length,
+                cell:Math.round(card.getBoundingClientRect().width),count:document.getElementById('v7-product-count')?.textContent,
+                overflow:g.scrollWidth>g.clientWidth+2,
+                price:!!card.querySelector('.v3-product-price')?.getClientRects().length,
+                cart:!!card.querySelector('.v3-add-cart')?.getClientRects().length};
+            });
+            console.log('LIVE_GRID',JSON.stringify({width,http:r?.status(),...data}));
+            if(r?.status()!==200||data.cols!==(width>=480?4:3)||data.cards<30||data.overflow||!data.price||!data.cart)throw Error('Live card grid failed at '+width);
+            await page.locator('#usemeGridDensity button[data-cols="4"]').click();
+            const n=await page.evaluate(()=>getComputedStyle(document.getElementById('liveProducts')).gridTemplateColumns.split(' ').length);
+            if(n!==4)throw Error('Live toggle failed at '+width);
+            console.log('LIVE_GRID_TOGGLE',JSON.stringify({width,cols:n,errors}));
+            if(errors.length)throw Error('JS page errors at '+width+': '+errors.join('; '));
+            await page.close();
+          }
+          await browser.close();
+          JS

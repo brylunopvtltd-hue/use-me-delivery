@@ -1,0 +1,29 @@
+<section id="sourceCatalog" aria-label="USE ME order 1000 real products">
+ <div class="source-head"><div><span class="source-eyebrow">USE ME · SHOP · ON-DEMAND PRODUCTS</span><h2>🛍️ 1,000 Real Products · Order with USE ME</h2></div><button type="button" id="sourceCartTrigger" class="source-primary">🛒 Request Cart (0)</button></div>
+ <p class="source-lead">Browse actual product names, brands and pictures. Add products to your request cart and place an order right here on USE ME. Our Owner checks availability, sources the item, and confirms the final item price and delivery fee before proceeding.</p>
+ <p class="source-help">Important: These are genuine external product references, not verified local inventory. Items may be unavailable locally. No product price or stock is promised, and no payment is requested before Owner confirmation. Images are third-party reference photos.</p>
+ <form id="sourceSearchForm" class="source-toolbar" role="search">
+ <label>Find product<input id="sourceSearch" type="search" maxlength="100" placeholder="Search name, brand or ASIN"></label>
+ <label>Category<select id="sourceCategory"><option value="All">All categories</option></select></label>
+ <label>Sort<select id="sourceSort"><option value="recent">Reference order</option><option value="a-z">Product name</option><option value="brand">Brand name</option></select></label>
+ <button type="submit" class="source-primary">Search</button></form>
+ <div class="source-count" id="sourceStatus" role="status" aria-live="polite">Loading products...</div>
+ <div id="sourceGrid" class="source-grid" aria-label="Products available for sourcing requests"></div>
+ <div class="source-more-actions"><button type="button" id="sourceMore" class="source-primary" hidden>Show next 40 products</button><button type="button" id="sourceRefresh" class="source-link">↻ Refresh products</button></div>
+ <details id="sourceCart" class="source-cart"><summary>🛒 Your Product Request Cart — <span id="sourceCartCount">0 items</span></summary>
+ <div class="source-cart-inner">
+  <p class="source-hint">Choose up to 12 different products per order, with quantities from 1 to 10. The final quote will come from USE ME Owner.</p>
+  <div id="sourceCartItems"></div>
+  <button type="button" class="source-link" id="sourceClear">Clear request cart</button>
+  <form id="sourceOrderForm" class="source-checkout-form" autocomplete="on">
+   <label>Recipient name<input id="sourceName" required maxlength="100" autocomplete="name" placeholder="Your full name"></label>
+   <label>WhatsApp / mobile number<input id="sourcePhone" required maxlength="22" inputmode="tel" autocomplete="tel" placeholder="07XXXXXXXX"></label>
+   <label>Delivery address<input id="sourceAddress" required maxlength="350" autocomplete="street-address" placeholder="House, street, town, landmark"></label>
+   <label>Special instructions<textarea id="sourceNote" maxlength="400" rows="2" placeholder="Size, colour, model, alternative choices or other needs"></textarea></label>
+   <div class="source-checkout-submit"><button id="sourceCheckout" type="submit" class="source-primary" disabled>Place USE ME Order Request</button><span class="source-hint">Estimated delivery minimum LKR 250; actual item prices and delivery fee confirmed by Owner.</span></div>
+  </form>
+  <div id="sourceLoginHint" hidden class="source-hint">Login required. <a href="/profile" class="source-link">Sign in to USE ME →</a> Then submit again.</div>
+ </div></details>
+ <div id="sourceSuccess" class="source-success" role="status" aria-live="polite" hidden></div>
+ <p class="source-hint">Reference listings from publicly available marketplace data; supplier stock and Sri Lankan prices are not confirmed. Original listing links on each item are for identification only.</p>
+</section>
