@@ -81,7 +81,8 @@ async function saveShopPickupDetails(){
 
 const USEME_PHOTO_BUCKET='product-images',USEME_MAX_PHOTO=12*1024*1024;
 let sellerPreviewBlob=null;
-function productImageUrl(path){
+function productImageUrl(path,qaPhotoUrl){
+ if(typeof qaPhotoUrl==='string'&&(/^https:\/\/m\.media-amazon\.com\/images\//.test(qaPhotoUrl)||/^https:\/\/picsum\.photos\/seed\/useme-[A-Z0-9]{10}\/400\/400$/.test(qaPhotoUrl)))return qaPhotoUrl;
  if(!usemeDb||typeof path!=='string'||!/^[0-9a-f-]{36}\/[0-9a-f-]+\.(jpe?g|png|webp)$/i.test(path))return null;
  const data=usemeDb.storage.from(USEME_PHOTO_BUCKET).getPublicUrl(path);
  return data?.data?.publicUrl||null;
@@ -149,7 +150,7 @@ async function loadSellerProducts(){
   const wantedShop=shopId,requestedSeq=seq;
   try{
    const {data,error:itemsError}=await usemeDb.from('products')
-    .select('id,shop_id,name,price_lkr,stock,active,category,description,image_path')
+    .select('id,shop_id,name,price_lkr,stock,active,category,description,image_path,qa_photo_url')
     .eq('shop_id',wantedShop).order('created_at',{ascending:false}).range(offset,offset+pageSize-1);
    if(wantedShop!==shopId||requestedSeq!==seq)return;
    if(itemsError){list.textContent='Products unavailable: '+itemsError.message;return}
@@ -173,7 +174,7 @@ function renderSellerProductRows(items,shopId){
  for(const p of visible){
   const card=document.createElement('article');card.className='v3-seller-row';
   const img=document.createElement('div');img.className='v3-seller-photo';
-  const src=productImageUrl(p.image_path);
+  const src=productImageUrl(p.image_path,p.qa_photo_url);
   if(src){const photo=document.createElement('img');photo.src=src;photo.alt=p.name;photo.loading='lazy';img.append(photo)}
   else img.textContent='📷';
   const body=document.createElement('div');body.className='v3-seller-details';
@@ -194,7 +195,7 @@ function renderSellerProductRows(items,shopId){
   };
   const publication=document.createElement('button');publication.className='btn';publication.textContent=p.active?'Unpublish':'Publish';
   publication.onclick=async()=>{
-   if(!p.active&&(!p.image_path||Number(p.stock)<=0)){alert('Save positive stock first, then publish. A real photo and approved shop pickup address are required.');return}
+   if(!p.active&&(!(p.image_path||p.qa_photo_url)||Number(p.stock)<=0)){alert('Save positive stock first, then publish. A real photo and approved shop pickup address are required.');return}
    publication.disabled=true;
    const {error}=await usemeDb.from('products').update({active:!p.active}).eq('id',p.id).eq('shop_id',p.shop_id);
    if(error){alert(error.message);publication.disabled=false}else{await loadSellerProducts();await loadLiveProducts()}
@@ -291,11 +292,11 @@ function addLiveCart(p){
   item.qty++;
   item.stock=Number(p.stock);
   item.price=Number(p.price_lkr);
-  item.image_path=p.image_path;
+  item.image_path=p.image_path;item.qa_photo_url=p.qa_photo_url||null;
  }else{
   liveCart.push({
    id:p.id,shop_id:p.shop_id,name:p.name,price:Number(p.price_lkr),
-   stock:Number(p.stock),qty:1,image_path:p.image_path||null,shop_name:p.shop_name||'USE ME Partner'
+   stock:Number(p.stock),qty:1,image_path:p.image_path||null,qa_photo_url:p.qa_photo_url||null,shop_name:p.shop_name||'USE ME Partner'
   });
  }
  saveLiveCart();go('cart');
@@ -319,7 +320,7 @@ async function revalidateLiveCart(){
  const ids=[...new Set(liveCart.map(x=>x.id))];
  try{
   const {data,error}=await usemeDb.from('products')
-   .select('id,shop_id,name,price_lkr,stock,active,image_path')
+   .select('id,shop_id,name,price_lkr,stock,active,image_path,qa_photo_url')
    .in('id',ids).eq('active',true).gt('stock',0);
   if(error)throw error;
   const valid=new Map((data||[]).map(p=>[p.id,p]));
@@ -330,7 +331,7 @@ async function revalidateLiveCart(){
    const qty=Math.min(100,Math.max(0,Number(fresh.stock)||0),x.qty);
    if(!qty){changed=true;return false}
    if(x.qty!==qty||x.price!==Number(fresh.price_lkr)||x.name!==fresh.name||x.image_path!==fresh.image_path)changed=true;
-   Object.assign(x,{qty,stock:Number(fresh.stock),price:Number(fresh.price_lkr),name:fresh.name,image_path:fresh.image_path});
+   Object.assign(x,{qty,stock:Number(fresh.stock),price:Number(fresh.price_lkr),name:fresh.name,image_path:fresh.image_path,qa_photo_url:fresh.qa_photo_url});
    return true;
   });
   if(changed)saveLiveCart();else{updateLiveCartBadge();renderLiveCart()}
@@ -361,7 +362,7 @@ function renderLiveCart(){
  for(const p of liveCart){
   const row=document.createElement('div');row.className='v3-cart-row';
   const photo=document.createElement('div');photo.className='v3-cart-photo';
-  const url=productImageUrl(p.image_path);
+  const url=productImageUrl(p.image_path,p.qa_photo_url);
   if(url){const img=document.createElement('img');img.src=url;img.alt=p.name;img.loading='lazy';photo.append(img)}else photo.textContent='🛍️';
   const detail=document.createElement('div');detail.className='v3-cart-detail';
   const name=document.createElement('h3');name.textContent=p.name;
@@ -482,7 +483,7 @@ async function loadLiveProducts(){
    if(requesting)return;requesting=true;
    try{
     let q=usemeDb.from('products')
-      .select('id,shop_id,name,price_lkr,stock,active,category,description,image_path')
+      .select('id,shop_id,name,price_lkr,stock,active,category,description,image_path,qa_photo_url')
       .in('shop_id',shops.map(s=>s.id)).eq('active',true);
     if(selectedCategory&&selectedCategory!=='All')q=q.ilike('category',selectedCategory);
     if(sort==='low'||sort==='high')q=q.order('price_lkr',{ascending:sort==='low'});
@@ -509,7 +510,7 @@ async function loadLiveProducts(){
    const card=document.createElement('article');card.className='v3-product-card';card.dataset.productId=p.id;
    card.dataset.search=[p.name,p.category,p.description,shopMap.get(p.shop_id)].join(' ').toLowerCase();
    const media=document.createElement('div');media.className='v3-product-media';
-   const src=productImageUrl(p.image_path);
+   const src=productImageUrl(p.image_path,p.qa_photo_url);
    if(src){const img=document.createElement('img');img.loading='lazy';img.alt=p.name;img.src=src;img.onerror=()=>{img.remove();media.textContent='🛍️';media.classList.add('v3-product-photo-missing')};media.append(img)}
    else{media.textContent='🛍️';media.classList.add('v3-product-photo-missing')}
    const body=document.createElement('div');body.className='v3-product-body';
