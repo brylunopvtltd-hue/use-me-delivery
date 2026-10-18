@@ -498,7 +498,7 @@ async function loadLiveProducts(){
    if(requesting)return;requesting=true;
    try{
     let q=usemeDb.from('products')
-      .select('id,shop_id,name,price_lkr,stock,active,category,description,image_path,qa_photo_url')
+      .select('id,shop_id,name,price_lkr,stock,active,category,description,image_path,qa_photo_url',{count:'exact'})
       .in('shop_id',shops.map(s=>s.id)).eq('active',true);
     if(selectedCategory&&selectedCategory!=='All')q=q.ilike('category',selectedCategory);
     if(sort==='low'||sort==='high')q=q.order('price_lkr',{ascending:sort==='low'});
@@ -547,7 +547,7 @@ async function loadLiveProducts(){
   filterCategories();
     if(raw.length===pageSize){
      const more=document.createElement('button');more.type='button';more.className='btn';
-     more.textContent='Load more products';
+     more.textContent='Load next 40 products ↓';
      more.onclick=()=>{more.remove();loadNextPage()};
      box.append(more);
     }
