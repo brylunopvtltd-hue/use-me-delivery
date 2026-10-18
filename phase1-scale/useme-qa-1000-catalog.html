@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#10182c">
+<title>USE ME · 1000 Test Products · Owner QA</title>
+<link rel="icon" href="/icon.svg">
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#141c2f;--panel2:#1a263d;--border:#2b3650;--accent:#f9b233;--sub:#aab8d0;--text:#f7f9ff;--green:#75d5aa}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -20%,#233553 0,var(--bg) 55%);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text);min-height:100vh}
+a{color:inherit;text-decoration:none}button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.55;cursor:wait}
+[hidden]{display:none!important}.container{width:min(1260px,94vw);margin:0 auto}
+header{position:sticky;z-index:5;top:0;background:#0c1224ed;backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:15px 0}
+.brand{display:flex;align-items:center;gap:10px;font-size:1.35rem;font-weight:900;letter-spacing:.08em}
+.brand-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:13px;background:var(--accent);font-size:1.5rem;color:#131722;font-weight:900}
+.brand small{display:block;font-size:10px;letter-spacing:.13em;color:var(--sub);font-weight:600;margin-top:1px}
+.back{padding:10px 15px;border:1px solid var(--border);border-radius:12px;background:var(--panel);font-weight:650}
+.hero{padding:35px 0 22px}.eyebrow{display:inline-block;color:var(--accent);font-size:12px;letter-spacing:.16em;font-weight:900;text-transform:uppercase;margin-bottom:8px}
+h1{font-size:clamp(29px,4.5vw,51px);line-height:1.1;margin:7px 0 12px;letter-spacing:-.03em}
+h1 span{color:var(--accent)}.hero p{color:var(--sub);line-height:1.65;max-width:740px;margin:0}
+.warning{padding:14px 17px;background:#302a1a;border:1px solid #75603c;color:#ffe9ad;border-radius:14px;margin-top:24px;font-size:14px;line-height:1.55}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:23px 0}
+.metric{border:1px solid var(--border);background:var(--panel);border-radius:17px;padding:20px}
+.metric strong{display:block;font-size:clamp(19px,2.5vw,31px);letter-spacing:-.04em;line-height:1.2;font-variant-numeric:tabular-nums}
+.metric span{display:block;margin-top:9px;font-size:12px;color:var(--sub);font-weight:600}
+.controls{padding:17px;border:1px solid var(--border);background:var(--panel);border-radius:20px;display:grid;grid-template-columns:minmax(170px,2fr) repeat(2,minmax(140px,1fr)) auto;gap:12px;align-items:end}
+.control{display:block;color:var(--sub);font-size:12px;font-weight:700}
+.control input,.control select{display:block;color:var(--text);background:#0f1829;width:100%;margin-top:7px;padding:13px 12px;min-height:45px;border:1px solid #3b4861;border-radius:11px;outline:none}
+.control input:focus,.control select:focus{border-color:var(--accent)}.btn{border-radius:11px;min-height:46px;padding:12px 18px;border:1px solid #b97c1d;background:var(--accent);font-weight:800;color:#141414}
+.btn-outline{background:transparent;color:var(--text);border-color:var(--border)}
+.status-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:21px 0 14px;font-size:13px;color:var(--sub)}
+.status{display:flex;align-items:center;gap:8px}.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px #1bbe7670}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.product-card{background:var(--panel);border:1px solid var(--border);border-radius:18px;overflow:hidden;min-width:0;transition:border-color .15s}
+.product-card:hover{border-color:#5e718c}.product-cover{aspect-ratio:1/1;background:#1f2b3b;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--sub);text-align:center}
+.product-cover img{width:100%;height:100%;object-fit:cover;display:block}.product-info{padding:15px}
+.category{text-transform:uppercase;letter-spacing:.07em;font-size:10px;font-weight:800;color:#f6b545}
+.product-info h3{font-size:15px;line-height:1.45;min-height:44px;margin:8px 0;overflow-wrap:anywhere}
+.product-info strong{font-size:18px;color:var(--text)}.product-info p{margin:10px 0 8px;color:#c6a785;font-size:12px;line-height:1.45}
+.sku{font-size:11px;color:var(--sub)}
+.actions{display:flex;justify-content:center;gap:11px;padding:28px 0 42px;flex-wrap:wrap}
+.auth{margin:30px auto;background:var(--panel);max-width:570px;border:1px solid var(--border);padding:32px;border-radius:22px;text-align:center}
+.auth h2{font-size:26px}.auth p{color:var(--sub);line-height:1.6}
+footer{border-top:1px solid var(--border);padding:24px 0 38px;color:var(--sub);font-size:12px;line-height:1.6;text-align:center}
+@media(max-width:930px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.controls{grid-template-columns:1fr 1fr}.controls .search-field{grid-column:1/-1}}
+@media(max-width:620px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.metric{padding:14px}.controls{padding:13px;gap:9px}.product-info{padding:11px}.product-info h3{font-size:13px}.product-info strong{font-size:15px}.brand{font-size:1.09rem}.back{font-size:12px;padding:9px}.topbar{padding:11px 0}.status-row{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script defer src="/assets/useme-qa-1000-catalog.js?v=20261018a"></script>
+</head>
+<body>
+<header><div class="container topbar"><div class="brand"><span class="brand-icon">U</span><span>USE ME<small>OWNER · QA LAB</small></span></div><a class="back" href="/">← Back to USE ME</a></div></header>
+<main class="container">
+<section class="hero">
+ <span class="eyebrow">Performance testing · temporary data</span>
+ <h1>1,000 <span>Test Products</span></h1>
+ <p>This private test catalogue loads 40 database records per request and fetches sample photographs from internet photo services. These are not genuine products or inventory.</p>
+ <div class="warning"><strong>⚠️ TEST DATA — NOT FOR SALE.</strong> All 1,000 test items are unpublished drafts with stock 0. They cannot be ordered. Do not treat the sample prices or pictures as real product information.</div>
+</section>
+<section id="authScreen" class="auth"><div style="font-size:44px">🔐</div><h2>Owner access required</h2><p id="authMessage">Checking USE ME Owner account...</p><a href="/" class="btn" style="display:inline-block;margin-top:12px">Open main USE ME website</a><button type="button" class="btn btn-outline" onclick="location.reload()" style="margin-top:12px">Retry</button></section>
+<section id="catalogScreen" hidden>
+<div class="metrics">
+ <div class="metric"><strong id="totalCount">—</strong><span>Matching test records</span></div>
+ <div class="metric"><strong id="loadedCount">0</strong><span>Products currently loaded</span></div>
+ <div class="metric"><strong id="pageTime">—</strong><span>Average database request</span></div>
+ <div class="metric"><strong id="photoCount">0 images loaded</strong><span>External images completed</span></div>
+</div>
+<form class="controls" id="searchForm">
+ <label class="control search-field">Search Test Products<input id="search" type="search" maxlength="80" placeholder="Try sneakers, watch, headphones..."></label>
+ <label class="control">Category<select id="category"></select></label>
+ <label class="control">Sort<select id="sort"><option value="newest">Newest first</option><option value="price-low">Price: low first</option><option value="price-high">Price: high first</option></select></label>
+ <button class="btn" type="submit">Search</button>
+</form>
+<div class="status-row"><span class="status"><span class="dot"></span><span id="accountStatus">Verified</span></span><span id="status" role="status" aria-live="polite">Loading...</span></div>
+<div class="grid" id="grid"></div>
+<div class="actions"><button type="button" id="loadMore" class="btn" hidden>Load next 40 products</button><button type="button" id="loadAll" class="btn btn-outline" hidden>Load all matching products (stress test)</button></div>
+</section>
+</main>
+<footer><div class="container">USE ME test batch: USEME_QA_1000_20261018 · All records belong to one isolated test shop and can be removed together. Images are hosted by third-party internet photo services and are not uploaded to Supabase Storage.</div></footer>
+</body></html>
