@@ -1,0 +1,33 @@
+name: Import 1000 genuine source-linked products
+on:
+  push:
+    branches: [feature/free-product-scale-phase1]
+    paths: ["phase1-scale/scripts/import-openfoodfacts.mjs", ".github/workflows/useme-import-real-products.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+jobs:
+  import-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Collect real Open Food Facts products
+        run: node phase1-scale/scripts/import-openfoodfacts.mjs
+      - name: Verify data
+        run: |
+          node -e "const a=require('./phase1-scale/data/openfoodfacts-1000.json');if(a.product_count!==1000||a.products.length!==1000||new Set(a.products.map(p=>p.code)).size!==1000)process.exit(1);console.log(a.product_count,a.products[0].product_name)"
+      - name: Commit source-linked catalogue to staging branch
+        run: |
+          git config user.email "actions@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add phase1-scale/data/openfoodfacts-1000.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Add 1000 genuine Open Food Facts product references"
+          git push
