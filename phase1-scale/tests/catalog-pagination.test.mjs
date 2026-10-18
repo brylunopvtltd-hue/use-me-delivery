@@ -102,7 +102,7 @@ async function loadAll(h){
 }
 test('Loads 350 approved-shop products over 9 pages; no extra or repeated items',async()=>{
  const h=harness(),result=await loadAll(h);
- assert.equal(result.pages,9);
+ assert.equal(result.pages,9,JSON.stringify(h.statuses));
  assert.equal(result.ids.length,350);
  assert.equal(new Set(result.ids).size,350);
  assert(!result.ids.some(v=>v.includes('0350')));
@@ -111,13 +111,13 @@ test('Loads 350 approved-shop products over 9 pages; no extra or repeated items'
 test('Searches product names across all 350 approved products instead of first 400 cap',async()=>{
  const h=harness();h.controls.v9SearchInput.value='Dress';
  const result=await loadAll(h);
- assert.equal(result.ids.length,70);
+ assert.equal(result.ids.length,70,JSON.stringify(h.statuses));
  assert.equal(new Set(result.ids).size,70);
 });
 test('Shop name matching is performed server-side and paginated',async()=>{
  const h=harness();h.controls.v9SearchInput.value='Irakkamam Grocery';
  const result=await loadAll(h);
- assert.equal(result.ids.length,25);
+ assert.equal(result.ids.length,25,JSON.stringify(h.statuses));
  assert.equal(result.pages,1);
 });
 test('Category, price and sorting filters are forwarded to the query',async()=>{
@@ -126,7 +126,7 @@ test('Category, price and sorting filters are forwarded to the query',async()=>{
  h.controls.v9SearchMaxPrice.value='40';
  h.controls.v9SearchSort.value='low';
  const result=await loadAll(h);
- assert(result.ids.length>0);
+ assert(result.ids.length>0,JSON.stringify(h.statuses));
  for(const id of result.ids){
   const p=products.find(x=>x.id===id);
   assert.equal(p.category,'Fashion');assert(p.price_lkr<=40);assert.notEqual(p.shop_id,shopC);
