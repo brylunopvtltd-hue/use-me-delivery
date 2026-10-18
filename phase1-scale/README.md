@@ -95,3 +95,14 @@ Do not merge or deploy without sign-off after browser and data-load QA. Preserve
 - Actual live mobile Chrome Playwright test, GitHub Actions run [39105843594](https://github.com/brylunopvtltd-hue/use-me-delivery/actions/runs/39105843594): **40 of 1008 products** on first load, **80 of 1008** after next page, product card sample images loaded with nonzero naturalWidth (including BOSCH, Elmer's, Greenlee and Cutter & Buck original Amazon photos). Core syntax checks passed.
 - Temporary image import Edge Functions `useme-complete-owner-test-photos` and `useme-owner-photo-import-qa` re-deployed as **disabled HTTP 410** endpoints, verify_jwt=true.
 - Note: **source-linked TEST data, TEST prices and TEST stock are fabricated for load validation**, not verified local USE ME inventory. External photos may be subject to third-party intellectual-property rights. Cleanup must use `public.useme_owner_qa_product_registry` to isolate the 1000 owner test rows, plus removal of test-only image-path exception and QA-only data when requested.
+
+
+## USE ME Daraz-style compact responsive Product Grid V10 (2026-10-18)
+- User's screenshot showed two large product cards per mobile row and asked for **3/4 per row**, like a compact marketplace.
+- Live worker **`use-me-superapp-web`**: added only `/assets/useme-daraz-mobile-grid-v10.css`, `/assets/useme-daraz-mobile-grid-v10.js`, with two corresponding versioned links in the main index HTML. All other prior assets remain unchanged.
+- Default for up to 479px viewport: **3 cards per row**. Default for 480–760px: **4 cards per row**. Tap **3/4** density selector to switch (remembers preference locally). Wider screens retain existing desktop layout.
+- Compact mobile cards: square full product images, readable two-line title and price, smaller genuine-shop badge, favorite control, smaller Quick View and Add to Cart; hidden duplicative Full Product Details text but photo click/keyboard activation opens existing Quick View. No product/order data changes.
+- Live backup: `useme-before-daraz-mobile-grid-v10-20261018`. Cloudflare version deployed 100%.
+- Preflight staged CSS/JS Chrome Playwright check: [run 39106819074](https://github.com/brylunopvtltd-hue/use-me-delivery/actions/runs/39106819074), all 360px, 390px and 520px sizes passed; zero JS page errors, no horizontal product-grid overflow, price/cart still visible, 4-column selector works.
+- **Live** mobile Chrome regression: [run 39106963586](https://github.com/brylunopvtltd-hue/use-me-delivery/actions/runs/39106963586), HTTP 200 at each size; **360px = 3 columns, 390px = 3 columns, 520px = 4 columns**. Product count `40 of 1008 products`, price/cart visible, no grid overflow, manual 4-column switch works, no page JavaScript errors.
+- Future modifications to main live HTML must retain the CSS/JS versioned links; deleting the dynamic source rows/products is independent of this grid styling.
