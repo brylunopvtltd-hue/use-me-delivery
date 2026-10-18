@@ -81,11 +81,26 @@ async function saveShopPickupDetails(){
 
 const USEME_PHOTO_BUCKET='product-images',USEME_MAX_PHOTO=12*1024*1024;
 let sellerPreviewBlob=null;
-function productImageUrl(path,qaPhotoUrl){
- if(typeof qaPhotoUrl==='string'&&((/^https:\/\/m\.media-amazon\.com\/images\//.test(qaPhotoUrl)||/^https:\/\/images-na\.ssl-images-amazon\.com\/images\//.test(qaPhotoUrl))||/^https:\/\/picsum\.photos\/seed\/useme-[A-Z0-9]{10}\/400\/400$/.test(qaPhotoUrl)))return qaPhotoUrl;
- if(!usemeDb||typeof path!=='string'||!/^[0-9a-f-]{36}\/[0-9a-f-]+\.(jpe?g|png|webp)$/i.test(path))return null;
- const data=usemeDb.storage.from(USEME_PHOTO_BUCKET).getPublicUrl(path);
- return data?.data?.publicUrl||null;
+function productImageUrl(path,qa_photo_url){
+ if(usemeDb&&typeof path==='string'&&/^[0-9a-f-]{36}\/[0-9a-f-]+\.(jpe?g|png|webp)$/i.test(path)){
+  const d=usemeDb.storage.from(USEME_PHOTO_BUCKET).getPublicUrl(path);
+  if(d?.data?.publicUrl)return d.data.publicUrl;
+ }
+ if(typeof qa_photo_url==='string'){
+  try{
+   const u=new URL(qa_photo_url);
+   if(u.protocol==='https:'&&['m.media-amazon.com','images-na.ssl-images-amazon.com'].includes(u.hostname)&&u.pathname.startsWith('/images/'))return u.href;
+  }catch(e){}
+ }
+ return null;
+}
+function usemeImageError(img,media,p){
+ const url=p.qa_photo_url;
+ if(!img.dataset.triedOriginal&&typeof url==='string'&&url.includes('/images/I/')){
+  const clean=url.replace(/\._[^/]*\.(jpe?g|png|webp)(?:\?.*)?$/i,'.$1');
+  if(clean!==img.src){img.dataset.triedOriginal='yes';img.src=clean;return}
+ }
+ img.remove();media.textContent='Original photo unavailable';media.classList.add('v3-product-photo-missing');
 }
 function previewSellerPhoto(input){
  const preview=document.getElementById('sellerProductPhotoPreview');
@@ -150,14 +165,14 @@ async function loadSellerProducts(){
   const wantedShop=shopId,requestedSeq=seq;
   try{
    const {data,error:itemsError}=await usemeDb.from('products')
-    .select('id,shop_id,name,price_lkr,stock,active,category,description,image_path,qa_photo_url')
+    .select('id,shop_id,name,price_lkr,stock,active,category,description,image_path,qa_photo_url',{count:'exact'})
     .eq('shop_id',wantedShop).order('created_at',{ascending:false}).range(offset,offset+pageSize-1);
    if(wantedShop!==shopId||requestedSeq!==seq)return;
    if(itemsError){list.textContent='Products unavailable: '+itemsError.message;return}
    const part=data||[];seen=seen.concat(part);offset+=part.length;
    renderSellerProductRows(seen,shopId);
    if(part.length===pageSize){
-    const more=document.createElement('button');more.type='button';more.className='btn';more.textContent='Load more products';
+    const more=document.createElement('button');more.type='button';more.className='btn';more.textContent='Load next 40 products ↓';
     more.onclick=()=>loadPage();list.append(more);
    }
   }finally{if(requestedSeq===seq)loading=false}
@@ -488,14 +503,14 @@ async function loadLiveProducts(){
     if(selectedCategory&&selectedCategory!=='All')q=q.ilike('category',selectedCategory);
     if(sort==='low'||sort==='high')q=q.order('price_lkr',{ascending:sort==='low'});
     else q=q.order('created_at',{ascending:false});
-    const {data,error}=await q.order('id',{ascending:true}).range(offset,offset+pageSize-1);
+    const {data,error,count}=await q.order('id',{ascending:true}).range(offset,offset+pageSize-1);
     if(error)throw error;
     const raw=data||[];
     let products=raw.filter(p=>shopMap.has(p.shop_id));
     offset+=raw.length;
     products.sort((a,b)=>(Number(b.stock)>0?1:0)-(Number(a.stock)>0?1:0));
     const countEl=document.getElementById('v7-product-count');
-    if(countEl)countEl.textContent=(box.querySelectorAll('.v3-product-card').length+products.length)+' products loaded';
+    if(typeof count==='number')window.usemeMarketProductTotal=count;if(countEl)countEl.textContent=(box.querySelectorAll('.v3-product-card').length+products.length)+' of '+(count??'?')+' products';
     if(!offset){
     if(true){
    const message=document.createElement('div');message.className='v3-empty-market';
@@ -511,8 +526,8 @@ async function loadLiveProducts(){
    card.dataset.search=[p.name,p.category,p.description,shopMap.get(p.shop_id)].join(' ').toLowerCase();
    const media=document.createElement('div');media.className='v3-product-media';
    const src=productImageUrl(p.image_path,p.qa_photo_url);
-   if(src){const img=document.createElement('img');img.loading='lazy';img.alt=p.name;img.src=src;img.onerror=()=>{img.remove();media.textContent='🛍️';media.classList.add('v3-product-photo-missing')};media.append(img)}
-   else{media.textContent='🛍️';media.classList.add('v3-product-photo-missing')}
+   if(src){const img=document.createElement('img');img.loading='lazy';img.decoding='async';img.referrerPolicy='no-referrer';img.alt=p.name;img.src=src;img.onerror=()=>usemeImageError(img,media,p);media.append(img)}
+   else{media.textContent='Original photo unavailable';media.classList.add('v3-product-photo-missing')}
    const body=document.createElement('div');body.className='v3-product-body';
    const label=document.createElement('small');label.className='v3-product-category';label.textContent=p.category||'General';
    const merchant=document.createElement('small');merchant.className='v7-shop-name';merchant.textContent='🏬 '+(shopMap.get(p.shop_id)||'USE ME approved shop');
@@ -667,7 +682,7 @@ function filterCategories(){
  }
  const old=document.getElementById('liveProductSearchEmpty');
  if(old)old.remove();
- const countEl=document.getElementById('v7-product-count');if(countEl)countEl.textContent=count+' '+(count===1?'product':'products');
+ const countEl=document.getElementById('v7-product-count');if(countEl)countEl.textContent=!q&&Number.isFinite(window.usemeMarketProductTotal)?count+' of '+window.usemeMarketProductTotal+' products':count+' matching products';
  if(q&&cards.length&&!count){
   const notice=document.createElement('p');notice.className='v3-empty-market';notice.id='liveProductSearchEmpty';
   notice.textContent='No verified products match "'+q+'". Try another search.';
