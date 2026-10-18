@@ -15,7 +15,7 @@ const six=n=>Math.round(Number(n)*1e6)/1e6;
 const point=(lat,lng,label,kind,orderId)=>({lat:six(lat),lng:six(lng),label:String(label||'Map pin').slice(0,100),kind:kind||'manual',orderId:orderId||null});
 const km=(p,q)=>{const toRad=Math.PI/180,R=6371;const dlat=(q.lat-p.lat)*toRad,dlon=(q.lng-p.lng)*toRad;const a=Math.sin(dlat/2)**2+Math.cos(p.lat*toRad)*Math.cos(q.lat*toRad)*Math.sin(dlon/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))};
 let mapPromise=null,maps={},layers={},publicPosition=null,manualPoint=null,selectedPoint=null,ownerOrders=[],ownerShops=new Map(),ownerPickup=new Map(),selectedOrder=null;
-let stops=[],routeLayer=null,sharingOrder=null,gpsWatch=null,shareHeartbeat=null,lastPublishedAt=0,lastLocation=null,sessionStart=0,trackingInterval=null,sharingBusy=false,routePlans=[];
+let stops=[],routeLayer=null,lastRouteStopSignature='',sharingOrder=null,gpsWatch=null,shareHeartbeat=null,lastPublishedAt=0,lastLocation=null,sessionStart=0,trackingInterval=null,sharingBusy=false,routePlans=[];
 const iconColors={shop:'#1677c9',customer:'#f68c24',owner:'#0ba575',manual:'#6455c5',private:'#405a90'};
 const iconGlyphs={shop:'🏪',customer:'🏠',owner:'🛵',manual:'📍',private:'📌'};
 const haveMap=async()=>{
@@ -234,13 +234,18 @@ function manualStop(){
 }
 async function paintOwnerMap(){
  const m=await initMap('v9OwnerMap',{pick:true,status:'v9OwnerStatus'});if(!m)return;
+ const signature=JSON.stringify(stops.map(p=>[p.lat,p.lng,p.label,p.kind]));
+ if(signature!==lastRouteStopSignature){
+  lastRouteStopSignature=signature;
+  if(routeLayer){m.removeLayer(routeLayer);routeLayer=null}
+  window.usemeDispatchV9InvalidateRoute?.();
+ }
  clearMarkers('v9OwnerMap');
- if(routeLayer){m.removeLayer(routeLayer);routeLayer=null}
  const all=[...stops];
  if(selectedOrder){for(const p of [shopPin(selectedOrder),customerPin(selectedOrder)])if(p&&!all.some(x=>x.lat===p.lat&&x.lng===p.lng))all.push(p)}
  all.forEach(p=>marker('v9OwnerMap',p,p.kind,p.label));
  if(lastLocation){const p=point(lastLocation.lat,lastLocation.lng,'My current GPS','owner');marker('v9OwnerMap',p,'owner','Owner phone GPS · local map. Sharing only if explicitly enabled.');all.push(p)}
- if(stops.length>1&&window.L){
+ if(stops.length>1&&window.L&&!routeLayer){
   routeLayer=window.L.polyline(stops.map(x=>[x.lat,x.lng]),{color:'#1375c2',weight:3,opacity:.67,dashArray:'5,9'}).addTo(m);
  }
  if(all.length)fit('v9OwnerMap',all);
@@ -251,18 +256,21 @@ async function previewRoad(){
  if(!proceed)return;
  info('v9OwnerStatus','Requesting in-app road route preview from OSRM (third-party). Please wait...');
  try{
+  const roadRequestSignature=JSON.stringify(stops.map(p=>[p.lat,p.lng,p.label,p.kind]));
   const points=stops.map(x=>x.lng+','+x.lat).join(';');
-  const url='https://router.project-osrm.org/route/v1/driving/'+points+'?overview=full&geometries=geojson&steps=false';
+  const url='https://router.project-osrm.org/route/v1/driving/'+points+'?overview=full&geometries=geojson&steps=true';
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),18000);
   let response;try{response=await fetch(url,{signal:controller.signal,mode:'cors'})}finally{clearTimeout(timeout)}
   if(!response.ok)throw Error('Road routing provider returned '+response.status);
   const data=await response.json();
   const result=data.routes?.[0];
   if(data.code!=='Ok'||!result?.geometry?.coordinates?.length)throw Error('No drivable road route found');
+  if(roadRequestSignature!==JSON.stringify(stops.map(p=>[p.lat,p.lng,p.label,p.kind])))throw Error('Stops changed during road routing. Please recalculate the route.');
   const m=await initMap('v9OwnerMap',{pick:true,status:'v9OwnerStatus'});
   if(routeLayer)m.removeLayer(routeLayer);
   routeLayer=window.L.geoJSON(result.geometry,{style:{color:'#12a574',weight:5,opacity:.9}}).addTo(m);
   m.fitBounds(routeLayer.getBounds().pad(.09));
+  window.usemeDispatchV9ShowDirections?.(result,stops.map(p=>({...p})),m);
   info('v9OwnerStatus','Road PREVIEW: '+(result.distance/1000).toFixed(2)+' km · '+Math.round(result.duration/60)+' minutes. Third-party estimate, not a fare quote; live traffic not included.');
  }catch(e){
   info('v9OwnerStatus','Road preview not available: '+e.message+'. Existing pins and approximate sequence remain available.');
@@ -439,6 +447,19 @@ function install(){
  if($('tracking')?.classList.contains('active'))fillTrackingOrders();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.usemeV9Maps={stopSharing:stopShare,showSaved:async(p)=>{if(p&&validCoord(p.lat,p.lng)){manualPoint=point(p.lat,p.lng,p.label||'My Location','private');await paintPublic()}},openOwner:()=>typeof go==='function'?go('ownerMap'):location.assign('/owner/map'),
+window.usemeV9Maps={ownerSetStops:async(next,orderId)=>{
+ if(!await ownerAuth())throw Error('Verified owner access is required for dispatch map routes.');
+ if(!Array.isArray(next)||next.length<2||next.length>12||
+  next.some(p=>!validCoord(p.lat,p.lng)))throw Error('Dispatch route must have 2–12 valid GPS stops.');
+ stops=next.map(p=>({lat:six(p.lat),lng:six(p.lng),
+  label:String(p.label||'Route stop').slice(0,100),
+  kind:['owner','shop','customer','manual'].includes(p.kind)?p.kind:'manual',
+  orderId:isUUID(p.orderId)?p.orderId:isUUID(orderId)?orderId:null}));
+ if(isUUID(orderId)){
+  selectedOrder=ownerOrders.find(o=>o.id===orderId)||null;
+  if($('v9OwnerOrderSelect'))$('v9OwnerOrderSelect').value=selectedOrder?.id||'';
+ }
+ renderStops();await paintOwnerMap();return true;
+},stopSharing:stopShare,showSaved:async(p)=>{if(p&&validCoord(p.lat,p.lng)){manualPoint=point(p.lat,p.lng,p.label||'My Location','private');await paintPublic()}},openOwner:()=>typeof go==='function'?go('ownerMap'):location.assign('/owner/map'),
  openCustomer:()=>typeof go==='function'?go('map'):location.assign('/map')};
 })();
