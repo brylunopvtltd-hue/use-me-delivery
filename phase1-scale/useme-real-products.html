@@ -18,7 +18,7 @@ h1 em{color:var(--brand);font-style:normal}
 .notice{padding:13px 16px;margin-top:24px;border:1px solid #66563a;background:#302719;color:#ffdda0;border-radius:13px;font-size:13px}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:25px 0}
 .stat{padding:15px 18px;border:1px solid var(--border);background:var(--p);border-radius:16px}.stat strong{display:block;font-size:clamp(20px,4vw,31px);font-variant-numeric:tabular-nums}.stat span{font-size:12px;color:var(--muted)}
-.toolbar{background:var(--p);border:1px solid var(--border);padding:14px;border-radius:16px;display:grid;grid-template-columns:2fr 1fr auto;gap:12px}
+.toolbar{background:var(--p);border:1px solid var(--border);padding:14px;border-radius:16px;display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px}
 .toolbar input,.toolbar select{width:100%;padding:12px;color:var(--text);background:#0b1425;border:1px solid var(--border);border-radius:10px;min-width:0}
 .btn{padding:12px 18px;background:var(--brand);border:none;color:#1a170c;border-radius:10px;font-weight:800}
 .info{color:var(--muted);margin:22px 0 13px;font-size:13px;min-height:20px}
@@ -42,10 +42,10 @@ footer a{color:#bdd5ff}
 <header><nav class="wrap"><a href="/" class="logo">U · USE ME</a><a class="back" href="/shop">← USE ME Shop</a></nav></header>
 <main class="wrap">
 <section class="hero">
-<span class="kicker">Product Discovery · 1000 real records</span>
+<span class="kicker">Real product discovery · 1,000 actual source records</span>
 <h1>உண்மையான <em>Product Catalogue</em></h1>
-<p class="sub">உண்மையான Barcode, Brand, Product Name மற்றும் Product Images — Open Food Facts திறந்த தரவிலிருந்து. இது பொருட்களை ஆராய்வதற்கான Catalogue; USE ME கடைகளில் இவை விற்பனைக்கு இருப்பதாக அர்த்தமல்ல.</p>
-<div class="notice"><strong>விற்பனைக்கு அல்ல · Reference only.</strong> உள்ளூர் விலை, Stock மற்றும் Delivery கிடைக்கும் நிலை சரிபார்க்கப்படவில்லை. இந்தப் பக்கத்தில் Order செய்வதற்கான பொத்தான்கள் இல்லை.</div>
+<p class="sub">உண்மையான Product Names, Brands, ASIN IDs மற்றும் இணையப் படங்கள் கொண்ட 1,000 Product பதிவுகள் USE ME Database-ல் சேர்க்கப்பட்டுள்ளன. தகவல்கள் Bright Data வெளியிட்ட Amazon Product Dataset மாதிரியிலிருந்து பெறப்பட்டவை. இவை USE ME கடைகளின் விற்பனைப் பொருட்கள் அல்ல.</p>
+<div class="notice"><strong>விற்பனைக்கு அல்ல · Reference only.</strong> இவை வெளிப்புற சந்தை பதிவுகளின் மாதிரித் தரவுகள்; உள்ளூர் விலை, Stock, Delivery மற்றும் தற்போதைய Availability உறுதிசெய்யப்படவில்லை. இந்தப் பக்கத்தில் Order வசதி இல்லை.</div>
 </section>
 <section class="stats">
 <div class="stat"><strong id="count">0 / 1000</strong><span>சரிபார்க்கப்பட்ட தரவு பதிவுகள்</span></div>
@@ -53,7 +53,7 @@ footer a{color:#bdd5ff}
 <div class="stat"><strong id="images">0</strong><span>படங்கள் ஏற்றப்பட்டன</span></div>
 </section>
 <form id="searchform" class="toolbar">
-<input id="search" type="search" placeholder="Product name, brand, barcode" aria-label="Search product">
+<input id="search" type="search" placeholder="Product name, brand, ASIN" aria-label="Search product"><select id="category" aria-label="Filter product category"><option value="All">All categories</option></select>
 <select id="sort" aria-label="Sort products"><option value="default">Original order</option><option value="name">Name A–Z</option><option value="brand">Brand A–Z</option></select>
 <button class="btn" type="submit">தேடு · Search</button>
 </form>
@@ -66,9 +66,6 @@ footer a{color:#bdd5ff}
 </div>
 </main>
 <footer><div class="wrap">
-Data: <a href="https://world.openfoodfacts.org/" rel="noopener" target="_blank">Open Food Facts</a>,
-<a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL database license</a>.
-Product images by Open Food Facts contributors (<a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA</a>). Individual records link to their sources.
-USE ME does not guarantee the accuracy of community-contributed records, prices, Sri Lankan availability or stock. Distinct from actual approved USE ME sellers' products.
+Source: <a href="https://github.com/luminati-io/Amazon-dataset-samples" rel="noopener noreferrer" target="_blank">Bright Data public Amazon dataset sample</a>. Every entry links to its original retailer product page. External product photos and brand assets remain subject to their respective owners’ rights and may be unavailable. Not affiliated with or endorsed by Amazon or any listed brand. USE ME does not guarantee current prices, local availability or stock. This reference catalogue is separate from approved USE ME merchants’ sellable products.
 </div></footer>
 </body></html>
