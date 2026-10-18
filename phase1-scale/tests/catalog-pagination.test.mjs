@@ -22,7 +22,8 @@ const products=Array.from({length:370},(_,i)=>({
  description:'Local item',
  category:i%2===0?'Fashion':'Beauty',
  price_lkr:(i%100)+25,
- stock:i%13===0?0:5
+ stock:i%13===0?0:5,
+ active:true
 }));
 function makeNode(tag,cls='',txt=''){
  const node={
