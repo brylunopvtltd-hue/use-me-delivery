@@ -29,6 +29,7 @@ jobs:
           node --check phase1-scale/useme-core-perf1.js
           node --check phase1-scale/useme-v9-commerce-support.js
           node --check phase1-scale/useme-qa-1000-catalog.js
+          node --check phase1-scale/useme-real-catalog.js
       - name: Run simulated 350-product catalog tests
         run: node --test phase1-scale/tests/catalog-pagination.test.mjs
       - name: Verify staged pagination and photo optimization features
