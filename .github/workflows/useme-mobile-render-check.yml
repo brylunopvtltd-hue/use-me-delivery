@@ -35,7 +35,25 @@ jobs:
            return {cards:cards.length,count:document.getElementById('v7-product-count')?.textContent,buttons:[...document.querySelectorAll('#liveProducts button')].map(x=>x.textContent).slice(-3),first,cache:window.usemeMarketProductTotal};
           });
           console.log('MOBILE_RENDER_CHECK',JSON.stringify(result));
-          if(!result.cards)process.exitCode=1;
-          if(result.count?.startsWith('120 products'))process.exitCode=1;
+          if(!result.cards||result.cards!==40)throw Error('Expected first page of 40 products');
+          if(!(result.cache>=1000))throw Error('Expected database catalogue >=1000, actual '+result.cache+' count '+result.count);
+          if(!result.first.some(x=>x.naturalWidth>0))throw Error('No real product images loaded');
+          const next=page.locator('#liveProducts > button').filter({hasText:'Load next 40 products'});
+          await next.click();
+          await page.waitForTimeout(1800);
+          const second=await page.evaluate(()=>({cards:document.querySelectorAll('#liveProducts .v3-product-card').length,count:document.getElementById('v7-product-count')?.textContent,more:[...document.querySelectorAll('#liveProducts > button')].map(x=>x.textContent)}));
+          console.log('SECOND_PAGE_CHECK',JSON.stringify(second));
+          if(second.cards!==80)throw Error('Pagination did not fetch second 40 products');
+          const imgIndexes=[8,15,35,48,70];
+          for(const ix of imgIndexes){
+            const element=page.locator('#liveProducts .v3-product-card').nth(ix);
+            await element.scrollIntoViewIfNeeded();
+            await page.waitForTimeout(350);
+          }
+          const photos=await page.evaluate(()=>{
+            const cards=[...document.querySelectorAll('#liveProducts .v3-product-card')];
+            return [8,15,35,48,70].map(ix=>{const e=cards[ix];const img=e?.querySelector('.v3-product-media img');return {index:ix,name:e?.querySelector('h3')?.textContent?.slice(0,60),src:img?.src?.slice(0,140)||null,width:img?.naturalWidth||0,message:e?.querySelector('.v3-product-media')?.textContent?.slice(0,40)}});
+          });
+          console.log('SAMPLED_PRODUCT_PHOTOS',JSON.stringify(photos));
           await browser.close();
           JS
