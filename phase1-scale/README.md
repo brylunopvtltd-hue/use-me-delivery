@@ -41,3 +41,16 @@ Do not merge or deploy without sign-off after browser and data-load QA. Preserve
 - External internet placeholder photos: `picsum.photos/seed/useme-qa-<test-index>/400/400`, category-based Unsplash backup; no product images were uploaded to Supabase Storage.
 - Cleanup when the owner explicitly asks to delete the test batch: inspect foreign key dependencies, then delete **only products with the exact above test shop UUID**, and finally delete **only that test shop**. Avoid deleting original shops, real products, user accounts or orders. Remove the private QA route if requested. Check dependent records before deletion; do not run clean-up automatically.
 - Verification: database checks showed 1000 unique test records and 40 records each in first and last logical pagination windows. GitHub Actions syntax check passed; actual client login and third-party image CDN browser rendering still require hands-on confirmation.
+
+## Real source-linked catalogue deployed (2026-10-18)
+
+- Live public URL: `https://use-me-superapp-web.bryluno-zunora.workers.dev/real-products`.
+- Public Supabase reference table: `public.useme_reference_products` with exactly **1,000** factual source-linked product records, **995** external photo URLs, **895** distinct brand labels.
+- This is intentionally **separate from** `public.products` and **not orderable**. No local price, local stock, or seller attribution was invented. It contains source snapshots, not verified local inventory.
+- Source: `https://github.com/luminati-io/Amazon-dataset-samples`, sample of real Amazon listings with titles, brand labels, ASINs, source retailer URLs and photo URLs. Rights to retailer images remain with the respective owners; not guaranteed to hotlink successfully. Not endorsed by Amazon.
+- Access: RLS enabled; `anon` and `authenticated` get `SELECT` only. No client insert/update/delete grants. Import was performed using the authenticated Supabase administration connector.
+- Website: new `/real-products` HTML, `/assets/useme-real-catalog.js`, main home-page discovery link, service-worker cache guard. Frontend retrieves two database batches of 500, renders 40 cards at a time, with full-catalog search, category and name sorting, origin links. No Add to Cart or checkout buttons.
+- Before real-page production update, complete live Worker backup: `useme-backup-before-real-products-20261018`. Verified 100%-active deployment. Existing owner test route, live sales UI, maps and order assets left unchanged.
+- The earlier `public.products` QA batch of 1,000 nonactive, stock-zero drafts in shop `8a8d46f2-76bb-4e18-9f1e-e4c6aca171fb` still exists separately; nine preexisting records are unchanged.
+- Future cleanup should distinguish the **older 1,000 QA drafts** from the **new 1,000 real reference entries**. Do not delete either group without confirming which batch is intended. This real reference table is not sellable USE ME product inventory.
+- Cloudflare source/assets and SQL row counts were checked. Actual customer-browser render and image CDN success remain to be manually checked.
