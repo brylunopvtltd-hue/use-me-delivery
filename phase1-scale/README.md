@@ -30,3 +30,14 @@ GitHub Actions workflow `.github/workflows/useme-scale-check.yml` ran successful
 ## Rollout safety
 
 Do not merge or deploy without sign-off after browser and data-load QA. Preserve an exact backup of the production Worker before replacing it.
+
+## Temporary 1000-product QA batch (2026-10-18)
+
+- Production USE ME Supabase project: `woytuayeuyfvucttvosw`.
+- Isolated test shop UUID: `8a8d46f2-76bb-4e18-9f1e-e4c6aca171fb`.
+- Batch marker in descriptions and shop name: `USEME_QA_1000_20261018`.
+- Exactly 1000 products inserted, all with `active=false`, `stock=0`, `image_path=null`, and a pending test shop. Original nine product records unchanged.
+- Private owner QA route on the **production Worker**: `/owner/test-catalog`. This page is isolated; the main product, cart and order code was not changed for this release. Only three HTML route aliases, one new JS asset, and service worker navigation cache protection were added to the current production Worker. Prior full Worker backed up to `useme-pre-1000-test-backup-20261018`.
+- External internet placeholder photos: `picsum.photos/seed/useme-qa-<test-index>/400/400`, category-based Unsplash backup; no product images were uploaded to Supabase Storage.
+- Cleanup when the owner explicitly asks to delete the test batch: inspect foreign key dependencies, then delete **only products with the exact above test shop UUID**, and finally delete **only that test shop**. Avoid deleting original shops, real products, user accounts or orders. Remove the private QA route if requested. Check dependent records before deletion; do not run clean-up automatically.
+- Verification: database checks showed 1000 unique test records and 40 records each in first and last logical pagination windows. GitHub Actions syntax check passed; actual client login and third-party image CDN browser rendering still require hands-on confirmation.
