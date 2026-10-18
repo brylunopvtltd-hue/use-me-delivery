@@ -138,6 +138,11 @@ async function checkout(event){
   success.append(el('p','','Order reference: '+orderId));
   success.append(el('p','','USE ME Owner will check item availability, confirm actual item price and quote delivery fee. Do not pay until you receive confirmation.'));
   const orders=el('a','source-link','View My Orders →');orders.href='/orders';orders.onclick=e=>{if(typeof openMyOrders==='function'){e.preventDefault();openMyOrders();}};success.append(orders);
+  const message='USE ME purchase request submitted: '+orderId+' · Please review in Owner Dashboard and confirm item prices, availability and delivery fee.';
+  const whatsapp=el('a','source-link','Send order reference to USE ME WhatsApp ↗');
+  whatsapp.href='https://wa.me/94752351751?text='+encodeURIComponent(message);
+  whatsapp.target='_blank';whatsapp.rel='noopener noreferrer';
+  success.append(document.createTextNode('  '),whatsapp);
   $('sourceOrderForm').reset();$('sourceCart').open=false;
   status('Order request sent to USE ME Owner Dashboard. Reference: '+orderId.slice(0,8));
  }catch(err){
