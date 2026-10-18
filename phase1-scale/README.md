@@ -12,7 +12,7 @@ The source snapshots here match the Cloudflare Worker `useme-scale-phase1-previe
 
 ## Code verification
 
-GitHub Actions workflow `.github/workflows/useme-scale-check.yml` ran successfully in run [39081000573](https://github.com/brylunopvtltd-hue/use-me-delivery/actions/runs/39081000573), covering `node --check` on both JS assets and basic staged-feature assertions. This is **syntax and basic source checking**, not user acceptance, browser QA or proof of 10,000-product capacity.
+GitHub Actions workflow `.github/workflows/useme-scale-check.yml` ran successfully in run [39081000573](https://github.com/brylunopvtltd-hue/use-me-delivery/actions/runs/39081000573), covering `node --check` on both JS assets and basic staged-feature assertions. A second successful run [39081281972](https://github.com/brylunopvtltd-hue/use-me-delivery/actions/runs/39081281972) verifies the full JavaScript syntax and **five simulated product-catalog tests**, including 350 approved products paginated in nine batches, 70 product-name matches, 25 shop-name matches, category/price filtering, and image-optimizer fallback. These are mock-data tests, **not real browser QA or a proof of 10,000-product capacity**.
 
 ## Important limitations before production
 
