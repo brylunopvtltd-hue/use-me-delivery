@@ -1,0 +1,394 @@
+/* USE ME V9 Commerce + Help: actual routed products, verified shops, voice search, price comparison, and private support tickets. */
+(function(){
+'use strict';
+const $=id=>document.getElementById(id),db=()=>typeof usemeDb==='undefined'?null:usemeDb;
+const elem=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=String(txt);return x};
+const button=(title,click,cls='v9c-btn')=>{const x=elem('button',cls,title);x.type='button';x.addEventListener('click',click);return x};
+const money=n=>'LKR '+Number(n||0).toLocaleString('en-LK',{minimumFractionDigits:0,maximumFractionDigits:2});
+const uuid=x=>/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(String(x||''));
+const safeStatus=(id,t)=>{if($(id))$(id).textContent=t};
+let catalog=[],shops=[],shopById=new Map(),compareSet=new Set(),activeTicket=null,ownerTickets=[],publicProduct=null,productOrders=[];
+const user=async()=>{if(!db())return null;try{return (await db().auth.getUser()).data?.user||null}catch(e){return null}};
+const owner=async()=>{const u=await user();if(!u)return false;const r=await db().rpc('is_owner');return !r.error&&r.data===true};
+function navigate(path){
+ if(!path||path[0]!=='/')return;
+ if(path==='/shop'&&typeof go==='function'){go('buy');return}
+ const root=path.startsWith('/products/')?'productDetails':path.startsWith('/shops/')?'shopDetails':path.startsWith('/help')?'help':path==='/owner/support'?'ownerSupport':path==='/search'?'searchV9':'';
+ if(root&&typeof go==='function'){
+  go(root,{url:path});return
+ }
+ location.href=path;
+}
+async function loadCatalog(){
+ if(!db())return [];
+ const s=await db().from('shops').select('id,name,status').eq('status','approved').order('name',{ascending:true}).limit(180);
+ if(s.error){shops=[];shopById=new Map();catalog=[];return []}
+ shops=s.data||[];shopById=new Map(shops.map(v=>[v.id,v.name]));catalog=[];
+ return [];
+}
+function photoOf(p){
+ try{return typeof productImageUrl==='function'?productImageUrl(p.image_path):null}catch(e){return null}
+}
+function card(p,withCompare=false){
+ const article=elem('article','v9c-item'),imageLink=elem('a','v9c-photo');imageLink.href='/products/'+p.id;
+ imageLink.addEventListener('click',e=>{e.preventDefault();navigate(imageLink.getAttribute('href'))});
+ const photo=photoOf(p);
+ if(photo){const img=elem('img');img.loading='lazy';img.src=photo;img.alt=p.name;imageLink.append(img)}
+ else imageLink.append(elem('span','','🛍️'));
+ const body=elem('div','v9c-item-body');
+ const shopLink=elem('a','v9c-shoplink','🏪 '+p.shop_name);shopLink.href='/shops/'+p.shop_id;
+ shopLink.addEventListener('click',e=>{e.preventDefault();navigate(shopLink.getAttribute('href'))});
+ const name=elem('a','v9c-item-name',p.name);name.href='/products/'+p.id;name.addEventListener('click',e=>{e.preventDefault();navigate(name.getAttribute('href'))});
+ body.append(shopLink,name,elem('strong','v9c-price',money(p.price_lkr)),elem('small','',p.stock>0?p.stock+' available':'Out of stock'));
+ const controls=elem('div','v9c-choices');
+ controls.append(button('Details',()=>navigate('/products/'+p.id),'v9c-soft'));
+ const add=button('+ Cart',()=>{if(p.stock>0&&typeof addLiveCart==='function')addLiveCart(p)},'v9c-buy');
+ add.disabled=p.stock<=0;controls.append(add);body.append(controls);
+ if(withCompare){
+  const label=elem('label','v9c-compare');
+  const check=elem('input');check.type='checkbox';check.checked=compareSet.has(p.id);
+  check.addEventListener('change',()=>{if(check.checked&&compareSet.size>=3){check.checked=false;alert('Compare up to three verified products.');return}
+   if(check.checked)compareSet.add(p.id);else compareSet.delete(p.id);
+   safeStatus('v9CompareCount',compareSet.size+' selected for comparison');
+  });
+  label.append(check,elem('span','','Compare'));body.append(label)
+ }
+ article.append(imageLink,body);return article;
+}
+let usemeSearchGeneration=0;
+async function renderSearch(){
+ const root=$('v9SearchResults');if(!root||!db())return;
+ const generation=++usemeSearchGeneration;
+ root.replaceChildren();
+ const raw=($('v9SearchInput')?.value||new URLSearchParams(location.search).get('q')||'').trim();
+ const query=raw.replace(/[%,()."*\\]/g,'').slice(0,80).trim();
+ const category=$('v9SearchCategory')?.value||'All';
+ const max=Number($('v9SearchMaxPrice')?.value||0);
+ const order=$('v9SearchSort')?.value||'popular';
+ if(raw&&(!query||!shops.length)){
+  safeStatus('v9SearchStatus','Search unavailable or query needs letters or numbers.');
+  return;
+ }
+ if(!shops.length){
+  safeStatus('v9SearchStatus','No approved shops to search.');
+  root.append(elem('p','v9c-muted','No approved shop products yet.'));
+  return;
+ }
+ let offset=0,loading=false,total=null;
+ const pageSize=40;
+ const grid=elem('div','v9c-grid');
+ root.append(grid);
+ catalog=[];compareSet.clear();
+ safeStatus('v9CompareCount','0 selected for comparison');
+ async function nextPage(){
+  if(loading||generation!==usemeSearchGeneration)return;
+  loading=true;
+  const previous=root.querySelector('[data-useme-search-more]');
+  if(previous)previous.remove();
+  safeStatus('v9SearchStatus',offset?'Loading more products...':'Searching verified shop products...');
+  try{
+   let q=db().from('products')
+    .select('id,shop_id,name,category,description,price_lkr,stock,active,image_path',{count:'exact'})
+    .eq('active',true).in('shop_id',shops.map(s=>s.id));
+   if(query){
+    const matched=shops.filter(s=>s.name.toLowerCase().includes(query.toLowerCase())).slice(0,60).map(s=>s.id);
+    const options=['name.ilike.%'+query+'%','description.ilike.%'+query+'%','category.ilike.%'+query+'%'];
+    if(matched.length)options.push('shop_id.in.('+matched.join(',')+')');
+    q=q.or(options.join(','));
+   }
+   if(category!=='All')q=q.eq('category',category);
+   if(Number.isFinite(max)&&max>0)q=q.lte('price_lkr',max);
+   if(order==='low'||order==='high')q=q.order('price_lkr',{ascending:order==='low'});
+   else q=q.order('stock',{ascending:false});
+   q=q.order('id',{ascending:true}).range(offset,offset+pageSize-1);
+   const {data,error,count}=await q;
+   if(generation!==usemeSearchGeneration)return;
+   if(error)throw error;
+   const page=(data||[]).filter(p=>shopById.has(p.shop_id));
+   page.forEach(p=>{
+    const enhanced={...p,shop_name:shopById.get(p.shop_id)};
+    catalog.push(enhanced);
+    grid.append(card(enhanced,true));
+   });
+   offset+=(data||[]).length;
+   total=typeof count==='number'?count:total;
+   fillSearchCategories();
+   const shown=grid.children.length;
+   safeStatus('v9SearchStatus',shown+' of '+(total??'available')+' verified products loaded. Prices and stock are from approved shops.');
+   if(!shown)root.append(elem('p','v9c-muted','No published products match those filters. Try a new search.'));
+   if((data||[]).length===pageSize&&(total===null||offset<total)){
+    const more=button('Load more products',nextPage,'v9c-btn');
+    more.dataset.usemeSearchMore='true';
+    root.append(more);
+   }
+  }catch(error){
+   if(generation!==usemeSearchGeneration)return;
+   safeStatus('v9SearchStatus','Search unavailable: '+(error.message||'Network issue'));
+   const retry=button('Retry search',nextPage,'v9c-btn');
+   retry.dataset.usemeSearchMore='true';
+   root.append(retry);
+  }finally{loading=false}
+ }
+ await nextPage();
+}
+function fillSearchCategories(){
+ const sel=$('v9SearchCategory');if(!sel)return;
+ const keep=sel.value;
+ const categories=new Set(['Groceries','Fashion','Beauty','Electronics','Home','Health','Baby','Books','Sports','Pets','Automotive']);
+ catalog.forEach(p=>{if(p.category)categories.add(p.category)});
+ sel.replaceChildren();
+ const all=elem('option','','All categories');all.value='All';sel.append(all);
+ [...categories].sort().forEach(c=>{const option=elem('option','',c);option.value=c;sel.append(option)});
+ if([...sel.options].some(x=>x.value===keep))sel.value=keep;
+}
+async function openSearch(){
+ const input=$('v9SearchInput'),qp=new URLSearchParams(location.search).get('q');
+ if(qp&&input)input.value=qp;
+ await loadCatalog();fillSearchCategories();renderSearch();
+}
+function voiceSearch(){
+ const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!Recognition)return safeStatus('v9SearchStatus','Voice input is not supported by this browser. Enter your search in Tamil, Sinhala or English.');
+ const r=new Recognition();r.lang=$('v9VoiceLang')?.value||'ta-LK';r.interimResults=false;r.maxAlternatives=1;
+ safeStatus('v9SearchStatus','Requesting microphone permission. Speak a product or shop name.');
+ r.onresult=e=>{const word=e.results?.[0]?.[0]?.transcript;if(word){$('v9SearchInput').value=word;renderSearch()}};
+ r.onerror=e=>safeStatus('v9SearchStatus','Voice search unavailable: '+e.error);
+ try{r.start()}catch(e){safeStatus('v9SearchStatus','Could not start voice recognition.')}
+}
+function compare(){
+ const ids=[...compareSet],root=$('v9CompareTable');
+ if(!root)return;root.replaceChildren();
+ if(ids.length<2)return safeStatus('v9SearchStatus','Select at least 2 products to compare real prices, stock and stores.');
+ const p=ids.map(id=>catalog.find(p=>p.id===id)).filter(Boolean);
+ if(p.length<2)return;
+ const table=elem('table','v9c-compare-table');
+ const fields=[['Product',x=>x.name],['Store',x=>x.shop_name],['Price',x=>money(x.price_lkr)],['Available stock',x=>x.stock],['Category',x=>x.category||'General']];
+ fields.forEach(([title,get])=>{
+  const tr=elem('tr');tr.append(elem('th','',title));p.forEach(x=>tr.append(elem('td','',get(x))));table.append(tr);
+ });
+ root.append(elem('h3','','Verified Product Comparison'),table);
+ root.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function addShopDetailsLink(){
+ document.querySelectorAll('#liveProducts .v3-product-card[data-product-id]').forEach(cardEl=>{
+  if(cardEl.querySelector('.v9c-more'))return;
+  const id=cardEl.dataset.productId;if(!uuid(id))return;
+  const link=elem('a','v9c-more','Full product details →');link.href='/products/'+id;
+  link.addEventListener('click',e=>{e.preventDefault();navigate(link.getAttribute('href'))});
+  cardEl.querySelector('.v3-product-body')?.append(link);
+ });
+}
+async function renderProduct(){
+ const root=$('v9ProductDetail'),reviews=$('v9ProductReviews');if(!root)return;
+ root.replaceChildren();reviews?.replaceChildren();
+ const id=location.pathname.match(/^\/products\/([0-9a-f-]{36})\/?$/i)?.[1];
+ if(!uuid(id)){root.append(elem('p','v9c-muted','Choose a product from Shop to see its real detail page.'));return}
+ const s=await db().from('products').select('id,shop_id,name,category,description,price_lkr,stock,active,image_path').eq('id',id).eq('active',true).maybeSingle();
+ if(s.error||!s.data){root.append(elem('p','v9c-muted','Product unavailable or removed.'));return}
+ const p=s.data,shop=await db().from('shops').select('id,name,status').eq('id',p.shop_id).eq('status','approved').maybeSingle();
+ if(shop.error||!shop.data){root.append(elem('p','v9c-muted','This product is not from an active approved shop.'));return}
+ publicProduct={...p,shop_name:shop.data.name};
+ const gallery=elem('div','v9c-detail-photo');
+ const im=photoOf(p);if(im){const image=elem('img');image.src=im;image.alt=p.name;gallery.append(image)}else gallery.textContent='🛍️';
+ const detail=elem('div','v9c-detail-info');
+ detail.append(elem('small','',p.category||'Product'),elem('h2','',p.name),elem('b','v9c-detail-price',money(p.price_lkr)),
+ elem('p','',p.description||'Verified local shop listing.'),
+ elem('p','v9c-stock',p.stock>0?p.stock+' in stock':'Temporarily unavailable'));
+ const shopLink=elem('a','v9c-shoplink','🏪 '+shop.data.name+' · Visit Shop →');shopLink.href='/shops/'+shop.data.id;
+ shopLink.addEventListener('click',e=>{e.preventDefault();navigate(shopLink.getAttribute('href'))});detail.append(shopLink);
+ const cartBtn=button(p.stock>0?'+ Add to Cart':'Out of Stock',()=>{if(p.stock>0&&typeof addLiveCart==='function')addLiveCart(publicProduct)},'v9c-buy');cartBtn.disabled=p.stock<=0;
+ detail.append(cartBtn);root.append(gallery,detail);
+ await loadProductReviews(p.id);
+ await loadEligibleReviewOrders(p.id);
+}
+async function loadProductReviews(productId){
+ const root=$('v9ProductReviews');if(!root)return;root.replaceChildren();
+ const r=await db().rpc('useme_v9_public_reviews',{p_product_id:productId});
+ if(r.error){root.append(elem('p','v9c-muted','Verified reviews unavailable.'));return}
+ const list=Array.isArray(r.data)?r.data:[];
+ if(!list.length){root.append(elem('p','v9c-muted','No Owner-approved, verified customer reviews yet.'));return}
+ const avg=list.reduce((s,x)=>s+x.rating,0)/list.length;
+ root.append(elem('strong','','★ '+avg.toFixed(1)+' / 5 · '+list.length+' verified approved review(s)'));
+ list.forEach(item=>{
+  const row=elem('article','v9c-review');
+  row.append(elem('b','',('★'.repeat(item.rating))+'☆'.repeat(5-item.rating)),
+ elem('p','',item.text),elem('small','',new Date(item.date).toLocaleDateString()));
+ root.append(row);
+ });
+}
+async function loadEligibleReviewOrders(productId){
+ const select=$('v9ProductReviewOrder');if(!select)return;select.replaceChildren();
+ const userData=await user();if(!userData){select.append(elem('option','','Sign in to review'));return}
+ const orders=await db().from('orders').select('id,status,created_at').eq('customer_id',userData.id).eq('status','delivered').order('created_at',{ascending:false}).limit(70);
+ if(orders.error||!orders.data?.length){select.append(elem('option','','No delivered orders'));return}
+ const items=await db().from('order_items').select('order_id,product_id').eq('product_id',productId).in('order_id',orders.data.map(o=>o.id)).limit(70);
+ if(items.error){select.append(elem('option','','Product delivery history unavailable'));return}
+ productOrders=[...new Set((items.data||[]).map(x=>x.order_id))];
+ if(!productOrders.length){select.append(elem('option','','No delivered order containing this product'));return}
+ productOrders.forEach(id=>{const o=elem('option','',id.slice(0,8)+' · Delivered');o.value=id;select.append(o)});
+}
+async function submitReview(e){
+ e.preventDefault();const u=await user();if(!u){safeStatus('v9ReviewStatus','Sign in first.');return}
+ if(!publicProduct||!productOrders.includes($('v9ProductReviewOrder')?.value))return safeStatus('v9ReviewStatus','Select an eligible delivered order.');
+ const r=await db().rpc('useme_v9_submit_review',{
+  p_order_id:$('v9ProductReviewOrder').value,p_product_id:publicProduct.id,
+  p_rating:Number($('v9ReviewRating').value),p_text:$('v9ReviewText').value.trim()
+ });
+ safeStatus('v9ReviewStatus',r.error?'Review not saved: '+r.error.message:'✓ Verified review submitted for Owner approval. It is not publicly visible yet.');
+ if(!r.error){$('v9ProductReviewForm').reset();loadEligibleReviewOrders(publicProduct.id)}
+}
+async function renderShop(){
+ const root=$('v9ShopDetails');if(!root)return;root.replaceChildren();
+ const id=location.pathname.match(/^\/shops\/([0-9a-f-]{36})\/?$/i)?.[1];
+ if(!uuid(id)){root.textContent='Choose a shop from the marketplace.';return}
+ const s=await db().from('shops').select('id,name,status').eq('id',id).eq('status','approved').maybeSingle();
+ if(s.error||!s.data){root.textContent='Shop unavailable or awaiting approval.';return}
+ root.append(elem('h2','','🏪 '+s.data.name),elem('p','v9c-muted','Verified USE ME merchant. Products are listed by this shop; all customer orders are managed and delivered by USE ME Owner.'));
+ const grid=elem('div','v9c-grid');
+ root.append(grid);
+ const pageSize=40;let offset=0,busy=false;
+ const more=elem('button','btn','Load more products');more.type='button';
+ async function nextPage(){
+  if(busy)return;busy=true;more.disabled=true;
+  try{
+   const result=await db().from('products')
+    .select('id,shop_id,name,category,description,price_lkr,stock,active,image_path')
+    .eq('shop_id',id).eq('active',true).order('created_at',{ascending:false}).range(offset,offset+pageSize-1);
+   if(result.error){if(!offset)root.append(elem('p','v9c-muted','Unable to load shop products.'));return}
+   const part=result.data||[];
+   part.forEach(p=>grid.append(card({...p,shop_name:s.data.name})));
+   offset+=part.length;
+   if(!offset)root.append(elem('p','v9c-muted','No published products in this shop right now.'));
+   if(part.length===pageSize){more.disabled=false;root.append(more)}else more.remove();
+  }finally{busy=false}
+ }
+ more.addEventListener('click',nextPage);
+ await nextPage();
+}
+async function fillHelpOrderSelect(){
+ const picker=$('v9HelpOrder');if(!picker)return;picker.replaceChildren();
+ const none=elem('option','','General support (no order)');none.value='';picker.append(none);
+ const u=await user();if(!u)return;
+ const r=await db().from('orders').select('id,status,service_type').eq('customer_id',u.id).order('created_at',{ascending:false}).limit(50);
+ if(r.error)return;
+ (r.data||[]).forEach(o=>{const x=elem('option','',o.service_type+' #'+o.id.slice(0,8)+' · '+o.status);x.value=o.id;picker.append(x)});
+}
+async function helpInit(){await fillHelpOrderSelect();await loadSupportTickets()}
+async function loadSupportTickets(){
+ const root=$('v9HelpTickets');if(!root)return;root.replaceChildren();
+ const u=await user();if(!u){root.append(elem('p','v9c-muted','Sign in to send secure support requests and see replies.'));return}
+ const r=await db().from('useme_v9_support_tickets').select('id,title,category,state,owner_note,created_at')
+ .eq('customer_id',u.id).order('created_at',{ascending:false}).limit(50);
+ if(r.error){root.textContent='Unable to load support cases: '+r.error.message;return}
+ if(!r.data?.length){root.append(elem('p','v9c-muted','No support requests yet.'));return}
+ r.data.forEach(t=>{
+  const card=elem('div','v9c-ticket');
+  card.append(elem('b','',t.title),elem('small','',t.state.toUpperCase()+' · '+t.category+' · '+new Date(t.created_at).toLocaleString()));
+  card.append(button('Open conversation',()=>openTicket(t.id),'v9c-soft'));root.append(card);
+ });
+}
+async function newTicket(e){
+ e.preventDefault();
+ const u=await user();if(!u)return safeStatus('v9HelpStatus','Sign in first to create a private support ticket.');
+ const data={
+  customer_id:u.id,
+  order_id:$('v9HelpOrder').value||null,
+  category:$('v9HelpCategory').value,
+  title:$('v9HelpTitle').value.trim(),
+  description:$('v9HelpDescription').value.trim()
+ };
+ const r=await db().from('useme_v9_support_tickets').insert(data).select('id').single();
+ safeStatus('v9HelpStatus',r.error?'Ticket not created: '+r.error.message:'✓ Private support ticket submitted; Owner will see it in the Support Desk.');
+ if(!r.error){$('v9HelpForm').reset();loadSupportTickets();openTicket(r.data.id)}
+}
+async function openTicket(id){
+ if(!uuid(id))return;
+ activeTicket=id;
+ const section=$('v9HelpConversation');if(!section)return;
+ section.hidden=false;section.scrollIntoView({behavior:'smooth',block:'nearest'});
+ const root=$('v9HelpMessages');root.replaceChildren();
+ const r=await db().from('useme_v9_support_messages').select('sender_id,message,created_at').eq('ticket_id',id).order('created_at',{ascending:true}).limit(100);
+ const u=await user();
+ if(r.error){root.textContent='This ticket conversation is private or unavailable.';return}
+ if(!r.data?.length)root.append(elem('p','v9c-muted','Ticket opened. New messages will appear here.'));
+ (r.data||[]).forEach(m=>{
+  const bubble=elem('div','v9c-message'+(u?.id===m.sender_id?' mine':''));bubble.append(elem('p','',m.message),elem('small','',new Date(m.created_at).toLocaleString()));root.append(bubble);
+ });
+ safeStatus('v9ConversationTitle','Support Ticket #'+id.slice(0,8));
+}
+async function sendTicketReply(e){
+ e.preventDefault();if(!uuid(activeTicket))return;
+ const u=await user();if(!u)return;
+ const text=$('v9HelpReply').value.trim();if(text.length<2)return;
+ const r=await db().from('useme_v9_support_messages').insert({ticket_id:activeTicket,sender_id:u.id,message:text});
+ safeStatus('v9HelpStatus',r.error?'Message not sent: '+r.error.message:'✓ Message saved on this private support case.');
+ if(!r.error){$('v9HelpReply').value='';openTicket(activeTicket)}
+}
+async function loadOwnerReviews(){
+ const root=$('v9OwnerReviewQueue');if(!root)return;
+ root.replaceChildren();
+ if(!await owner()){root.append(elem('p','v9c-muted','Owner login required.'));return}
+ const r=await db().from('useme_v9_verified_reviews').select('id,product_id,rating,review_text,created_at').eq('approved',false).order('created_at',{ascending:false}).limit(75);
+ if(r.error){root.textContent='Review moderation unavailable: '+r.error.message;return}
+ if(!r.data?.length){root.append(elem('p','v9c-muted','No pending verified product reviews.'));return}
+ const ids=[...new Set(r.data.map(x=>x.product_id))];
+ const items=await db().from('products').select('id,name').in('id',ids).limit(100);
+ const names=new Map((items.data||[]).map(x=>[x.id,x.name]));
+ r.data.forEach(x=>{
+  const panel=elem('article','v9c-owner-ticket');
+  panel.append(elem('b','','★'.repeat(x.rating)+'☆'.repeat(5-x.rating)+' · '+(names.get(x.product_id)||'Product')),
+   elem('p','',x.review_text),elem('small','','Submitted '+new Date(x.created_at).toLocaleString()));
+  panel.append(button('✓ Approve authentic review',async()=>{
+   if(!confirm('Approve this verified delivered-order review for public display?'))return;
+   const result=await db().from('useme_v9_verified_reviews').update({approved:true}).eq('id',x.id);
+   safeStatus('v9OwnerSupportStatus',result.error?'Could not approve review: '+result.error.message:'✓ Verified review approved for public display.');
+   if(!result.error)loadOwnerReviews();
+  },'v9c-buy'));
+  root.append(panel);
+ });
+}
+async function loadOwnerSupport(){
+ const root=$('v9OwnerSupportList');if(!root)return;root.replaceChildren();
+ if(!await owner()){safeStatus('v9OwnerSupportStatus','Verified Owner account required.');return}
+ const r=await db().from('useme_v9_support_tickets').select('id,title,description,category,state,owner_note,customer_id,created_at').order('created_at',{ascending:false}).limit(100);
+ if(r.error){safeStatus('v9OwnerSupportStatus','Support tickets unavailable: '+r.error.message);return}
+ safeStatus('v9OwnerSupportStatus',r.data.length+' recent private support requests. Customers cannot see other users’ tickets.');
+ loadOwnerReviews();
+ r.data.forEach(t=>{
+  const div=elem('article','v9c-owner-ticket');
+  div.append(elem('h3','',t.title),elem('p','',t.description),elem('small','',t.category+' · '+new Date(t.created_at).toLocaleString()));
+  const sel=elem('select');['open','in_review','resolved','closed'].forEach(st=>{const o=elem('option','',st);o.value=st;sel.append(o)});sel.value=t.state;
+  const note=elem('textarea');note.value=t.owner_note||'';note.placeholder='Owner resolution note (shown to ticket customer)';note.maxLength=1600;
+  const ctrl=elem('div','v9c-row');
+  ctrl.append(button('Open & Reply',()=>{
+   if(typeof go==='function')go('help',{url:'/help/ticket/'+t.id});
+   openTicket(t.id);
+  },'v9c-soft'));
+  ctrl.append(button('Save status',async()=>{
+   const ret=await db().from('useme_v9_support_tickets').update({state:sel.value,owner_note:note.value.trim(),updated_at:new Date().toISOString()}).eq('id',t.id);
+   safeStatus('v9OwnerSupportStatus',ret.error?'Could not save: '+ret.error.message:'✓ Support case updated.');if(!ret.error)loadOwnerSupport();
+  },'v9c-buy'));
+  div.append(sel,note,ctrl);root.append(div);
+ });
+}
+function attach(){
+ $('v9SearchForm')?.addEventListener('submit',e=>{e.preventDefault();const q=$('v9SearchInput').value.trim();history.replaceState({useme:'searchV9'},'','/search'+(q?'?q='+encodeURIComponent(q):''));renderSearch()});
+ for(const id of ['v9SearchCategory','v9SearchSort','v9SearchMaxPrice'])$(id)?.addEventListener('change',renderSearch);
+ $('v9VoiceSearch')?.addEventListener('click',voiceSearch);$('v9CompareButton')?.addEventListener('click',compare);
+ $('v9ProductReviewForm')?.addEventListener('submit',submitReview);
+ $('v9HelpForm')?.addEventListener('submit',newTicket);$('v9HelpReplyForm')?.addEventListener('submit',sendTicketReply);
+ $('v9HelpTicketsRefresh')?.addEventListener('click',loadSupportTickets);
+ $('v9OwnerSupportRefresh')?.addEventListener('click',loadOwnerSupport);
+ $('v9OwnerReviewRefresh')?.addEventListener('click',loadOwnerReviews);
+ const pages=[['searchV9',openSearch],['productDetails',renderProduct],['shopDetails',renderShop],['help',helpInit],['ownerSupport',loadOwnerSupport]];
+ pages.forEach(([id,fn])=>{
+  const el=$(id);if(!el)return;
+  new MutationObserver(()=>{if(el.classList.contains('active'))fn()}).observe(el,{attributes:true,attributeFilter:['class']});
+  if(el.classList.contains('active'))fn();
+ });
+ const grid=$('liveProducts');if(grid){new MutationObserver(addShopDetailsLink).observe(grid,{childList:true});addShopDetailsLink()}
+ if(db())db().auth.onAuthStateChange(()=>setTimeout(()=>{if($('help')?.classList.contains('active'))helpInit();if($('productDetails')?.classList.contains('active'))renderProduct()},300));
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',attach,{once:true});else attach();
+window.usemeV9Commerce={product:id=>navigate('/products/'+id),shop:id=>navigate('/shops/'+id),search:q=>navigate('/search?q='+encodeURIComponent(q))};
+})();
