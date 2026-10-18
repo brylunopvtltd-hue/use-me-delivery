@@ -27,7 +27,7 @@ async function loadCatalog(){
  return [];
 }
 function photoOf(p){
- try{return typeof productImageUrl==='function'?productImageUrl(p.image_path):null}catch(e){return null}
+ try{return typeof productImageUrl==='function'?productImageUrl(p.image_path,p.qa_photo_url):null}catch(e){return null}
 }
 function card(p,withCompare=false){
  const article=elem('article','v9c-item'),imageLink=elem('a','v9c-photo');imageLink.href='/products/'+p.id;
@@ -183,7 +183,7 @@ async function renderProduct(){
  root.replaceChildren();reviews?.replaceChildren();
  const id=location.pathname.match(/^\/products\/([0-9a-f-]{36})\/?$/i)?.[1];
  if(!uuid(id)){root.append(elem('p','v9c-muted','Choose a product from Shop to see its real detail page.'));return}
- const s=await db().from('products').select('id,shop_id,name,category,description,price_lkr,stock,active,image_path').eq('id',id).eq('active',true).maybeSingle();
+ const s=await db().from('products').select('id,shop_id,name,category,description,price_lkr,stock,active,image_path,qa_photo_url').eq('id',id).eq('active',true).maybeSingle();
  if(s.error||!s.data){root.append(elem('p','v9c-muted','Product unavailable or removed.'));return}
  const p=s.data,shop=await db().from('shops').select('id,name,status').eq('id',p.shop_id).eq('status','approved').maybeSingle();
  if(shop.error||!shop.data){root.append(elem('p','v9c-muted','This product is not from an active approved shop.'));return}
@@ -252,7 +252,7 @@ async function renderShop(){
   if(busy)return;busy=true;more.disabled=true;
   try{
    const result=await db().from('products')
-    .select('id,shop_id,name,category,description,price_lkr,stock,active,image_path')
+    .select('id,shop_id,name,category,description,price_lkr,stock,active,image_path,qa_photo_url')
     .eq('shop_id',id).eq('active',true).order('created_at',{ascending:false}).range(offset,offset+pageSize-1);
    if(result.error){if(!offset)root.append(elem('p','v9c-muted','Unable to load shop products.'));return}
    const part=result.data||[];
