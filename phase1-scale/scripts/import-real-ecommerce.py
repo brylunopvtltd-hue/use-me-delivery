@@ -8,6 +8,7 @@ with urllib.request.urlopen(req,timeout=45) as response:
  data=response.read(9_000_000)
  print('Source HTTP',response.status,'bytes',len(data))
 text=data.decode('utf-8-sig','replace')
+csv.field_size_limit(10_000_000)
 reader=csv.DictReader(io.StringIO(text))
 print('HEADERS',reader.fieldnames)
 products=[]
