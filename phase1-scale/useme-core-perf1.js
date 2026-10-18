@@ -82,7 +82,7 @@ async function saveShopPickupDetails(){
 const USEME_PHOTO_BUCKET='product-images',USEME_MAX_PHOTO=12*1024*1024;
 let sellerPreviewBlob=null;
 function productImageUrl(path,qaPhotoUrl){
- if(typeof qaPhotoUrl==='string'&&(/^https:\/\/m\.media-amazon\.com\/images\//.test(qaPhotoUrl)||/^https:\/\/picsum\.photos\/seed\/useme-[A-Z0-9]{10}\/400\/400$/.test(qaPhotoUrl)))return qaPhotoUrl;
+ if(typeof qaPhotoUrl==='string'&&((/^https:\/\/m\.media-amazon\.com\/images\//.test(qaPhotoUrl)||/^https:\/\/images-na\.ssl-images-amazon\.com\/images\//.test(qaPhotoUrl))||/^https:\/\/picsum\.photos\/seed\/useme-[A-Z0-9]{10}\/400\/400$/.test(qaPhotoUrl)))return qaPhotoUrl;
  if(!usemeDb||typeof path!=='string'||!/^[0-9a-f-]{36}\/[0-9a-f-]+\.(jpe?g|png|webp)$/i.test(path))return null;
  const data=usemeDb.storage.from(USEME_PHOTO_BUCKET).getPublicUrl(path);
  return data?.data?.publicUrl||null;
