@@ -1,0 +1,41 @@
+name: USE ME Mobile Shop Rendering QA
+on:
+  push:
+    branches: [feature/free-product-scale-phase1]
+    paths: [".github/workflows/useme-mobile-render-check.yml"]
+permissions:
+  contents: read
+jobs:
+  chrome-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-save playwright@1.56.1
+      - run: npx playwright install chromium
+      - name: Inspect mobile marketplace products and image load
+        run: |
+          node --input-type=module <<'JS'
+          import {chromium} from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,deviceScaleFactor:1});
+          page.on('pageerror',e=>console.log('PAGE ERROR:',e.message.slice(0,240)));
+          const res=await page.goto('https://use-me-superapp-web.bryluno-zunora.workers.dev/shop?qa=20261018b',{waitUntil:'domcontentloaded',timeout:50000});
+          console.log('SITE STATUS',res?.status());
+          await page.waitForTimeout(10000);
+          const result=await page.evaluate(()=>{
+           const cards=[...document.querySelectorAll('#liveProducts .v3-product-card')];
+           const first=cards.slice(0,8).map(el=>{
+            const img=el.querySelector('.v3-product-media img');
+            return {name:el.querySelector('h3')?.textContent?.slice(0,90),image:img?.src?.slice(0,150)||null,complete:img?.complete,naturalWidth:img?.naturalWidth||0,imageLabel:el.querySelector('.v3-product-media')?.textContent?.slice(0,50)};
+           });
+           return {cards:cards.length,count:document.getElementById('v7-product-count')?.textContent,buttons:[...document.querySelectorAll('#liveProducts button')].map(x=>x.textContent).slice(-3),first,cache:window.usemeMarketProductTotal};
+          });
+          console.log('MOBILE_RENDER_CHECK',JSON.stringify(result));
+          if(!result.cards)process.exitCode=1;
+          if(result.count?.startsWith('120 products'))process.exitCode=1;
+          await browser.close();
+          JS
