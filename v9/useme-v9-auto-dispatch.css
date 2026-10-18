@@ -1,0 +1,52 @@
+/* USE ME V9 Advanced Owner Dispatch — real multi-shop routes and in-app road directions */
+#v9AutoDispatch{margin:13px 0;padding:15px 16px;border-radius:16px;
+  background:linear-gradient(135deg,#eaf7ff,#fff9e9);border:1px solid #b9def5;
+  box-shadow:0 7px 20px #164a7410;color:#153e60}
+#v9AutoDispatch h2{margin:0 0 7px;color:#124875;font-size:18px;font-weight:950;line-height:1.28}
+#v9AutoDispatch .v9-auto-intro{font-size:12px;line-height:1.65;color:#5d738b;margin:4px 0 11px}
+#v9AutoDispatch .v9-auto-btn{border:0;background:linear-gradient(120deg,#0860a6,#0a82c4);color:white;
+  min-height:43px;padding:10px 16px;border-radius:11px;font-weight:900;font-size:12px;width:100%;cursor:pointer}
+#v9AutoDispatch .v9-auto-btn:disabled{opacity:.5;cursor:wait}
+#v9AutoDispatchStatus{padding:10px 11px;border-radius:9px;background:#fff;min-height:25px;font-size:11px;line-height:1.6;
+ color:#235e81;border:1px solid #d4e7f7;overflow-wrap:anywhere}
+#v9AutoDispatchSummary{margin:10px 0}
+.v9-auto-journey{font-size:12px;line-height:1.6;color:#0b5b8f;background:#def4ff;padding:10px 11px;border-radius:9px;font-weight:900}
+.v9-auto-muted{font-size:11px;line-height:1.65;color:#658198;margin:7px 0}
+.v9-auto-progress{font-size:11px;font-weight:850;color:#205986;margin:7px 0}
+#v9AutoDispatchChecklist{display:grid;gap:7px;margin-top:9px}
+.v9-auto-check{display:flex;align-items:center;gap:9px;min-height:38px;
+  background:#fff;border:1px solid #dceaf5;border-radius:9px;padding:8px 10px;
+  font-weight:750;font-size:12px;line-height:1.5;color:#255270}
+.v9-auto-check input{width:19px;height:19px;min-width:19px;accent-color:#159268}
+.v9-auto-check span{overflow-wrap:anywhere;min-width:0}
+.v9-auto-check:has(input:checked){background:#ecf9f1;color:#247250}
+.v9-auto-directions{padding:14px;margin:14px 0 4px;background:#f7fcff;
+  border:1px solid #b9deee;border-radius:15px;color:#193d5f}
+.v9-auto-directions[hidden]{display:none!important}
+.v9-auto-road-header h3{font-size:17px;font-weight:950;color:#0e567d;margin:0 0 6px}
+.v9-auto-road-header p{font-size:12px;font-weight:750;color:#426f8f;line-height:1.6;margin:0 0 14px}
+.v9-auto-leg{margin:7px 0;border:1px solid #d4e6f5;border-radius:11px;background:white;overflow:hidden}
+.v9-auto-leg summary{cursor:pointer;padding:12px 13px;background:linear-gradient(100deg,#eff8ff,#f9fbff);
+ color:#164d76;font-size:12px;font-weight:900;line-height:1.6;overflow-wrap:anywhere}
+.v9-auto-leg[open] summary{border-bottom:1px solid #e3edf6}
+.v9-auto-turn-list{list-style-type:decimal;padding:8px 10px 8px 27px;margin:0}
+.v9-auto-turn{padding:8px 0 9px 2px;border-bottom:1px solid #edf3f8;display:flex;gap:11px;align-items:center;justify-content:space-between}
+.v9-auto-turn:last-child{border-bottom:0}
+.v9-auto-turn-text{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.v9-auto-turn-text span{font-size:12px;color:#2d5371;line-height:1.48;overflow-wrap:anywhere}
+.v9-auto-turn-text small{font-size:10px;color:#71869b;font-weight:800}
+.v9-auto-mini{flex:0 0 auto;background:#e6f2fe;border:1px solid #c6e2f8;color:#1b5d94;padding:7px 8px;
+ border-radius:7px;cursor:pointer;font-size:10px;font-weight:850}
+.v9-auto-warning{padding:11px 12px;border:1px solid #f3d5a7;border-radius:10px;background:#fff7e9;
+ font-size:11px;color:#905e2d;line-height:1.5;margin:12px 0 0}
+#v9OwnerMap{scroll-margin-top:125px}
+@media(max-width:650px){
+ #v9AutoDispatch{padding:12px;margin:10px 0;border-radius:12px}
+ #v9AutoDispatch h2{font-size:16px}
+ .v9-auto-directions{padding:10px;margin:10px 0}
+ .v9-auto-mini{font-size:9px;padding:7px 5px}
+ .v9-auto-leg summary{font-size:11px}
+ .v9-auto-turn{align-items:flex-start}
+ .v9-auto-road-header h3{font-size:15px}
+}
+@media(prefers-reduced-motion:reduce){.v9-auto-panel *,.v9-auto-directions *{transition:none!important;animation:none!important}}
