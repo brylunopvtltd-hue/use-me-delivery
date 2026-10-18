@@ -19,7 +19,11 @@ jobs:
           'https://m.media-amazon.com/images/I/41UbPFLOVkL._SY445_SX342_QL70_FMwebp_.jpg',
           'https://m.media-amazon.com/images/I/41UbPFLOVkL.jpg',
           'https://m.media-amazon.com/images/I/81uv+cHAxxL._AC_SY300_SX300_.jpg',
-          'https://m.media-amazon.com/images/I/81uv+cHAxxL.jpg'
+          'https://m.media-amazon.com/images/I/81uv+cHAxxL.jpg',
+          'https://images-na.ssl-images-amazon.com/images/I/51Z8YX8k1FL._SY445_SX342_QL70_ML2_.jpg',
+          'https://m.media-amazon.com/images/I/51Z8YX8k1FL._SY445_SX342_QL70_ML2_.jpg',
+          'https://images-na.ssl-images-amazon.com/images/I/91tfn2iv3lL.__AC_SX300_SY300_QL70_ML2_.jpg',
+          'https://m.media-amazon.com/images/I/91tfn2iv3lL.__AC_SX300_SY300_QL70_ML2_.jpg'
           ]
           for u in urls:
             try:
