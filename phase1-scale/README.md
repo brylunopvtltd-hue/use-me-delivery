@@ -54,3 +54,17 @@ Do not merge or deploy without sign-off after browser and data-load QA. Preserve
 - The earlier `public.products` QA batch of 1,000 nonactive, stock-zero drafts in shop `8a8d46f2-76bb-4e18-9f1e-e4c6aca171fb` still exists separately; nine preexisting records are unchanged.
 - Future cleanup should distinguish the **older 1,000 QA drafts** from the **new 1,000 real reference entries**. Do not delete either group without confirming which batch is intended. This real reference table is not sellable USE ME product inventory.
 - Cloudflare source/assets and SQL row counts were checked. Actual customer-browser render and image CDN success remain to be manually checked.
+
+
+## LIVE — Standard USE ME Shop now supports requesting 1,000 actual external products (2026-10-18)
+
+- URL: `https://use-me-superapp-web.bryluno-zunora.workers.dev/shop`, inside the EXISTING `#buy` page.
+- Added source files: `phase1-scale/useme-sourcing-catalog.{html,css,js}`. Production Worker contains new `/assets/useme-sourcing-catalog.js` and `/assets/useme-sourcing-catalog.css` and one embedded Shop section. All 47 existing static assets other than index.html were preserved.
+- Production Worker rollback source: `useme-before-sourcing-shop-20261018`; deployment API confirms 100%.
+- Data uses all 1,000 `public.useme_reference_products` via two 500-record queries. These are real externally sourced product titles, brands, ASIN IDs and image URLs; **not proof of local supplier stock or prices**.
+- Customer can search, filter, add to request cart, change quantity (1–10), and place an authenticated on-demand sourcing order for up to 12 different products with name, phone, address, note.
+- Migration `useme_catalog_sourcing_order_flow_20261018`: new authenticated-only `place_useme_catalog_order_once` stored procedure; creates a standard USE ME `orders` row with `shop_id=NULL`, `status=pending`, `items_subtotal_lkr=0` (unknown), the configured minimum delivery fee as nonfinal placeholder; child `order_items` preserve product names/ASIN/qty with zero provisional item costs; owner/customer notifications; request-ID idempotency. Existing `confirm_order_quote` supports Owner final product and delivery quote since shop_id is null. No supplier assignment or inventory deductions are fabricated.
+- Owner WhatsApp sharing is **opt-in from the customer's successful checkout UI**; it does not claim automatic WhatsApp API message delivery.
+- SQL test with simulated authenticated context created an order with 2 items, checked status/quote/idempotency and rolled back. Order count remained 6 after test. RPC EXECUTE access confirmed authenticated=true, anon=false. Existing 1,000 test drafts and 9 original sellable-shop records remain untouched.
+- Github Actions run 39101296389 checked source JS syntax. UI IDs matched, 0 missing IDs.
+- Remaining human QA: Customer login, mobile browser, image hotlink loading, notifications/owner dashboard list and final price quote; real-world supplier availability must be verified before accepting payment.
