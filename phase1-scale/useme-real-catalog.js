@@ -1,58 +1,108 @@
-(()=>{'use strict';
-const TARGET=1000,MAX_PAGE=8,PAGE_SIZE=40;
-const $=x=>document.getElementById(x);
-const coll=new Map();let rows=[],filtered=[],displayed=0,images=0,getting=false;
-const safe=(v,max=150)=>String(v??'').trim().slice(0,max);
-function image(url){return typeof url==='string'&&/^https:\/\/images\.openfoodfacts\.org\//.test(url)?url:null}
-function update(){ $('count').textContent=rows.length+' / '+TARGET;$('visible').textContent=filtered.length;$('images').textContent=images }
-function view(p){
- const item=document.createElement('article');item.className='card';
- const cover=document.createElement('div');cover.className='visual';
- if(p.image){const img=document.createElement('img');img.src=p.image;img.alt='Photo: '+p.name;img.loading='lazy';img.decoding='async';
- img.addEventListener('load',()=>{images++;update()});img.addEventListener('error',()=>{img.remove();cover.textContent='Image unavailable'});cover.append(img)}
- else cover.textContent='No image';
- const content=document.createElement('div');content.className='details';
- const brand=document.createElement('div');brand.className='brand';brand.textContent=p.brand||'Brand not listed';
- const name=document.createElement('h3');name.textContent=p.name;
- const meta=document.createElement('div');meta.className='meta';meta.textContent=(p.quantity||'Quantity not listed')+' · Barcode '+p.barcode;
- const stock=document.createElement('span');stock.className='not-sale';stock.textContent='விலை / Stock உறுதிசெய்யப்படவில்லை';
- const src=document.createElement('a');src.className='source';src.href='https://world.openfoodfacts.org/product/'+encodeURIComponent(p.barcode);src.rel='noopener noreferrer';src.target='_blank';src.textContent='View original product ↗';
- content.append(brand,name,meta,stock,src);item.append(cover,content);return item
+(()=>{
+'use strict';
+const API='https://woytuayeuyfvucttvosw.supabase.co/rest/v1/useme_reference_products';
+const KEY='sb_publishable_NG-tEBNafW-8tZwOvW2njA_WYzXCq8C';
+const TARGET=1000,PAGE_SIZE=40;
+const $=id=>document.getElementById(id);
+const safe=(v,max=170)=>String(v??'').trim().slice(0,max);
+let rows=[],filtered=[],displayed=0,loadedImages=0,busy=false,generation=0;
+function image(url){return typeof url==='string'&&/^https:\/\/(m\.media-amazon\.com|images-na\.ssl-images-amazon\.com)\//i.test(url)?url:null}
+function source(url){return typeof url==='string'&&/^https:\/\/(www\.)?amazon\.[a-z.]+\//i.test(url)?url:null}
+function updateCounters(){
+ $('count').textContent=rows.length+' / '+TARGET;
+ $('visible').textContent=filtered.length;
+ $('images').textContent=loadedImages;
 }
-function renderMore(){const frag=document.createDocumentFragment();filtered.slice(displayed,displayed+PAGE_SIZE).forEach(p=>frag.append(view(p)));
- $('products').append(frag);displayed=Math.min(displayed+PAGE_SIZE,filtered.length);$('more').hidden=displayed>=filtered.length;
- $('status').textContent='Showing '+displayed+' / '+filtered.length+' matching products · '+rows.length+' real source records loaded';}
+function card(p){
+ const node=document.createElement('article');node.className='card';
+ const visual=document.createElement('div');visual.className='visual';
+ const picture=image(p.image_url);
+ if(picture){
+  const img=document.createElement('img');img.src=picture;img.alt='Reference photo — '+p.title;img.loading='lazy';img.decoding='async';img.width=400;img.height=400;
+  img.addEventListener('load',()=>{loadedImages++;updateCounters()});
+  img.addEventListener('error',()=>{img.remove();visual.textContent='Product image unavailable'});
+  visual.append(img);
+ }else visual.textContent='Product photo not supplied';
+ const details=document.createElement('div');details.className='details';
+ const brand=document.createElement('div');brand.className='brand';brand.textContent=p.brand||'Brand not specified';
+ const title=document.createElement('h3');title.textContent=p.title;
+ const meta=document.createElement('div');meta.className='meta';meta.textContent=(p.category||'Product')+' · ASIN '+p.asin;
+ const warning=document.createElement('span');warning.className='not-sale';warning.textContent='Not for sale · Local price / stock unverified';
+ const original=source(p.source_url);
+ details.append(brand,title,meta,warning);
+ if(original){
+  const link=document.createElement('a');link.className='source';link.href=original;link.rel='noopener noreferrer nofollow';link.target='_blank';link.textContent='Original product listing ↗';details.append(link);
+ }
+ node.append(visual,details);return node;
+}
+function renderMore(){
+ const frag=document.createDocumentFragment();
+ filtered.slice(displayed,displayed+PAGE_SIZE).forEach(p=>frag.append(card(p)));
+ $('products').append(frag);
+ displayed=Math.min(displayed+PAGE_SIZE,filtered.length);
+ $('more').hidden=displayed>=filtered.length;
+ $('status').textContent='Showing '+displayed+' of '+filtered.length+' matching products · '+rows.length+' database records';
+}
 function filter(){
  const term=safe($('search').value,100).toLocaleLowerCase();
- filtered=rows.filter(p=>!term||[p.name,p.brand,p.barcode,p.category].some(t=>t.toLocaleLowerCase().includes(term)));
+ const cat=$('category')?.value||'All';
+ filtered=rows.filter(p=>(cat==='All'||p.category===cat)&&(!term||[p.title,p.brand,p.asin,p.category].some(s=>s.toLocaleLowerCase().includes(term))));
  const sort=$('sort').value;
- if(sort==='name')filtered.sort((a,b)=>a.name.localeCompare(b.name));else if(sort==='brand')filtered.sort((a,b)=>a.brand.localeCompare(b.brand));
- displayed=0;$('products').replaceChildren();update();renderMore();
+ if(sort==='name')filtered.sort((a,b)=>a.title.localeCompare(b.title));
+ if(sort==='brand')filtered.sort((a,b)=>a.brand.localeCompare(b.brand));
+ displayed=0;$('products').replaceChildren();updateCounters();renderMore();
 }
-async function getRemote(){
- $('status').textContent='Connecting to open product database...';$('error').hidden=true;getting=true;$('refresh').disabled=true;
- coll.clear();rows=[];filtered=[];displayed=0;images=0;$('products').replaceChildren();update();
- let failures=0;
- for(let page=1;page<=MAX_PAGE&&coll.size<TARGET;page++){
-  try{
-   const feed=new URL('https://world.openfoodfacts.org/api/v2/search');feed.searchParams.set('page',String(page));feed.searchParams.set('page_size','500');feed.searchParams.set('sort_by','scans_n');feed.searchParams.set('fields','code,product_name,product_name_en,brands,quantity,image_front_small_url,image_front_url,main_category_en,categories');const response=await fetch(feed.toString(),{mode:'cors',cache:'default'});
-   if(!response.ok)throw Error('Product service HTTP '+response.status);
-   const info=await response.json();const data=Array.isArray(info.products)?info.products:[];
-   if(!data.length){failures++;if(failures>=2)break;continue}
-   for(const p of data){
-    const barcode=safe(p.code,24).replace(/[^0-9]/g,'');
-    const name=safe(p.product_name||p.product_name_en,140);
-    const img=image(p.image_front_small_url)||image(p.image_front_url);
-    if(!barcode||!name||!img||coll.has(barcode))continue;
-    coll.set(barcode,{barcode,name,brand:safe(p.brands,100),quantity:safe(p.quantity,80),category:safe(p.main_category_en||p.categories,100),image:img});
-    if(coll.size>=TARGET)break;
-   }
-   rows=[...coll.values()];$('status').textContent='Loaded '+rows.length+' of '+TARGET+' verifiable products...';update();
-  }catch(err){failures++;if(failures>=2){$('error').hidden=false;$('error').textContent='Source temporarily unavailable: '+String(err.message||err);break}}
- }
- rows=[...coll.values()];getting=false;$('refresh').disabled=false;filter();
- if(rows.length===0){$('error').hidden=false;$('error').textContent='Product feed could not be retrieved. Please retry. This page will not invent product data.'}
- else if(rows.length<TARGET){$('status').textContent='Loaded '+rows.length+' actual products. The source supplied fewer usable image-and-name records than the 1000 target.'}
+function categories(){
+ const sel=$('category'),old=sel.value;
+ const values=[...new Set(rows.map(p=>p.category).filter(Boolean))].sort();
+ sel.replaceChildren();
+ const first=document.createElement('option');first.value='All';first.textContent='All categories';sel.append(first);
+ values.forEach(label=>{const opt=document.createElement('option');opt.value=label;opt.textContent=label;sel.append(opt)});
+ if(values.includes(old))sel.value=old;
 }
-document.addEventListener('DOMContentLoaded',()=>{$('more').addEventListener('click',renderMore);$('refresh').addEventListener('click',()=>{if(!getting)getRemote()});$('sort').addEventListener('change',filter);$('searchform').addEventListener('submit',e=>{e.preventDefault();filter()});getRemote()});
+async function queryChunk(offset){
+ const u=new URL(API);
+ u.searchParams.set('select','asin,title,brand,category,image_url,source_url');
+ u.searchParams.set('order','asin.asc');
+ u.searchParams.set('offset',String(offset));
+ u.searchParams.set('limit','500');
+ const response=await fetch(u.toString(),{headers:{apikey:KEY,'Accept':'application/json'},cache:'no-store'});
+ if(!response.ok)throw Error('USE ME database response '+response.status);
+ const data=await response.json();
+ if(!Array.isArray(data))throw Error('Invalid catalogue data');
+ return data;
+}
+async function load(){
+ if(busy)return;busy=true;const thisRun=++generation;
+ $('refresh').disabled=true;$('error').hidden=true;
+ $('status').textContent='Loading genuine product references from USE ME database...';
+ try{
+  const pages=await Promise.all([queryChunk(0),queryChunk(500)]);
+  if(thisRun!==generation)return;
+  const unique=new Map();
+  for(const p of pages.flat()){
+   const asin=safe(p.asin,14);
+   const title=safe(p.title,180);
+   if(!/^[A-Z0-9]{10}$/.test(asin)||title.length<3||unique.has(asin))continue;
+   unique.set(asin,{asin,title,brand:safe(p.brand,90),category:safe(p.category,90),image_url:p.image_url,source_url:p.source_url});
+  }
+  rows=[...unique.values()];
+  loadedImages=0;
+  categories();
+  filter();
+  if(rows.length<TARGET)$('status').textContent='Loaded '+rows.length+' valid products of the 1000 source records; some records may be unavailable.';
+ }catch(err){
+  $('error').hidden=false;
+  $('error').textContent='Unable to load the real product catalogue. '+String(err.message||err)+' — refresh this page to retry.';
+  $('status').textContent='Catalogue temporarily unavailable';
+ }finally{busy=false;$('refresh').disabled=false}
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ $('more').addEventListener('click',renderMore);
+ $('refresh').addEventListener('click',load);
+ $('sort').addEventListener('change',filter);
+ $('category').addEventListener('change',filter);
+ $('searchform').addEventListener('submit',e=>{e.preventDefault();filter()});
+ load();
+});
 })();
