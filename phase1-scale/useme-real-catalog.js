@@ -35,7 +35,7 @@ async function getRemote(){
  let failures=0;
  for(let page=1;page<=MAX_PAGE&&coll.size<TARGET;page++){
   try{
-   const response=await fetch('/api/real-products?page='+page,{cache:'default'});
+   const feed=new URL('https://world.openfoodfacts.org/api/v2/search');feed.searchParams.set('page',String(page));feed.searchParams.set('page_size','500');feed.searchParams.set('sort_by','scans_n');feed.searchParams.set('fields','code,product_name,product_name_en,brands,quantity,image_front_small_url,image_front_url,main_category_en,categories');const response=await fetch(feed.toString(),{mode:'cors',cache:'default'});
    if(!response.ok)throw Error('Product service HTTP '+response.status);
    const info=await response.json();const data=Array.isArray(info.products)?info.products:[];
    if(!data.length){failures++;if(failures>=2)break;continue}
